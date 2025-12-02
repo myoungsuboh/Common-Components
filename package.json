@@ -1,0 +1,25 @@
+{
+  "name": "common-components",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "sass": "^1.94.2",
+    "vue": "^3.5.25",
+    "vuetify": "^3.11.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.2",
+    "unplugin-auto-import": "^20.3.0",
+    "vite": "^7.2.4",
+    "vite-plugin-vue-devtools": "^8.0.5"
+  }
+}
