@@ -43,9 +43,7 @@ const onTabChange = (newTabValue) => {
   }
 };
 
-defineOptions({
-  inheritAttrs: false,
-});
+defineOptions({ inheritAttrs: false });
 </script>
 <template>
   <div :class="direction === 'vertical' && !title && 'd-flex flex-row'">
