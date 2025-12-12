@@ -4,7 +4,7 @@ import CodeHighlight from 'vue-code-highlight/src/CodeHighlight.vue';
 const vueCode = `
 공통 컴포넌트를 만들면서 대부분 사용하는 기능인 상속에 대한 내용입니다.
 
-부모 -> 자식으로 직접적으로 props 전달하는 방법은 크게 2가지가 있습니다. [고정 값(정적) / 바인딩(동적)]
+부모 -> 자식 직접적으로 props 전달하는 방법은 크게 2가지가 있습니다. [고정 값(정적) / 바인딩(동적)]
 
 동적 옵션들은 defineProps 에서 정의해서 사용,
 

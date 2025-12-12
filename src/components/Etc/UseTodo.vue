@@ -5,20 +5,45 @@ import CodeHighlight from 'vue-code-highlight/src/CodeHighlight.vue';
   <VCard>
     <VCardItem>
       <VCardTitle>To Do List</VCardTitle>
-      <VCardSubtitle>도비야 일하자....</VCardSubtitle>
+      <VCardSubtitle>Desc...</VCardSubtitle>
     </VCardItem>
     <VCardText class="bg-black">
-      <ol>
-        <li>
-          <h4>TextBox 구현</h4>
-        </li>
-        <li>
-          <h4>GitLab 올려야 함(방화벽 막혀있다는데..?)</h4>
-        </li>
-        <li>
-          <h4>ReadGrid Pagenation 커스텀</h4>
-        </li>
-      </ol>
+      <h2>목표</h2>
+      <span>
+        <p>
+          신규 프로젝트에서 공통 컴포넌트를 사용하여 보다 편리하고 빠르게
+          작업하기 위함.
+        </p>
+        <br />
+        <VDivider class="border-opacity-100" color="white" />
+        <h3>컴포넌트 종류</h3>
+        <div class="pl-5">
+          <ol>
+            <li>
+              <h4>TextBox</h4>
+              - InputBox, TextInputBox, NumberInputBox, EmailInputBox,
+              PasswordInputBox
+            </li>
+            <li>
+              <h4>Tab</h4>
+              - Tab, TabContent, InternalTabs
+            </li>
+            <li>
+              <h4>Card</h4>
+              - Card
+            </li>
+            <li>
+              <h4>Button</h4>
+              - Button 클릭시 API 호출하여 데이터만 리턴하는 기능 필요
+            </li>
+            <li>
+              <h4>ReadGrid 커스텀</h4>
+              - Pagenation, 엑셀 출력
+            </li>
+          </ol>
+        </div>
+        <VDivider class="border-opacity-100" color="white" />
+      </span>
     </VCardText>
   </VCard>
 </template>

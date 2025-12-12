@@ -59,5 +59,7 @@ watch(inputValue, (nVal) => {
     v-bind="attrs"
     v-model:value="inputValue"
     type="text"
+    @blur="setFixed($event)"
+    @keydown.enter="setFixed($event)"
   />
 </template>

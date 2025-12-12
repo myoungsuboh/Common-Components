@@ -20,7 +20,7 @@ const initialTabData = {
     { key: 't4_tab_1', label: '첫번째' },
     { key: 't4_tab_2', label: '두번째' },
   ],
-};
+}; 
 
 const tab1 = ref(Object.values(initialTabData.type_1)[0].key);
 const tab2 = ref(Object.values(initialTabData.type_2)[0].key);

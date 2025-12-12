@@ -1,5 +1,5 @@
 <script setup>
-import Button from '@/components/Button.vue';
+import Button from '@/components/Button/Button.vue';
 import Card from '@/components/Card/Card.vue';
 
 const isLoading = ref(false);
