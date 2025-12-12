@@ -1,0 +1,99 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  CI_REPOSITORY_URL: 'http://gitlab:28083/$CI_PROJECT_PATH.git'
+  CI_SERVER_URL: 'http://gitlab:28083'
+
+image: node:20.19.0-slim
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - node_modules/
+
+before_script:  
+  - apt-get update -y
+  - apt-get install -y git ca-certificates --no-install-recommends
+  - rm -rf /var/lib/apt/lists/*
+  - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab:28083/".insteadOf "http://gitlab:28083/"
+
+# ==================================
+# 1. 빌드 단계 (Build Job)
+# ==================================
+build_job:
+  stage: build
+  tags:
+    - ci-docker
+  script:
+    - echo "--- Installing dependencies and building project ---"
+    - npm install
+    - npm run build
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - node_modules/
+      - dist/
+
+# ==================================
+# 2. 테스트 단계 (Test Job)
+# ==================================
+test_job:
+  stage: test
+  tags:
+    - ci-docker
+  script:
+    - echo "--- Build artifact verified. ---"
+  dependencies:
+    - build_job
+
+# ==================================
+# 3. 배포 단계 (Deploy to Nginx Volume)
+# ==================================
+deploy_job:
+  stage: deploy
+  
+  # ⚠️ Docker CLI 명령을 실행하기 위해 Docker가 설치된 이미지로 변경합니다.
+  image: docker:25.0.3-cli
+
+  services:
+    # 1. Docker 데몬을 서비스 컨테이너로 시작
+    - docker:25.0.3-dind
+
+  variables:
+    DOCKER_HOST: 'unix:///var/run/docker.sock'
+
+  tags:
+    - ci-docker
+    - vue-build
+
+  only:
+    - main
+
+  before_script: []
+
+  script:
+    - echo "--- Locating Nginx container and copying build artifacts ---"
+    # 1. Nginx 컨테이너 ID를 가져옵니다.
+    #    Portainer에서 지정한 컨테이너 이름을 사용합니다.
+    
+    - NGINX_CONTAINER_NAME="frontend-nginx"
+    # 2. 'dist' 디렉토리의 내용을 Nginx 컨테이너 내부의 Volume 경로로 복사합니다.
+    #    $CI_PROJECT_DIR은 현재 워크스페이스입니다.
+    #    Nginx 컨테이너 이름과 컨테이너 내부의 최종 경로(/usr/share/nginx/html)를 사용합니다.
+    #    -L 옵션: 심볼릭 링크를 따라가 실제 파일을 복사합니다.
+    #    'docker cp' 명령이 Host의 Docker Socket을 통해 실행됩니다.
+    - docker cp -L "$CI_PROJECT_DIR/dist/." "$NGINX_CONTAINER_NAME":/usr/share/nginx/html
+
+    # 3. Nginx 설정 파일이 존재하는지 확인하고 Nginx를 재로드합니다. (프록시 캐시 갱신 및 파일 적용)
+    #    Nginx 컨테이너 내부에서 명령을 실행합니다.
+    - echo "--- Copy finished. Reloading Nginx configuration ---"
+    
+    - docker exec "$NGINX_CONTAINER_NAME" sh -c "nginx -t && nginx -s reload"
+
+    - echo "--- Deployment complete! ---"
+
+  dependencies:
+    - build_job # build_job에서 생성된 dist/ 폴더를 사용합니다.
