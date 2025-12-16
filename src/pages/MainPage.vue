@@ -8,6 +8,8 @@ import UseTodo from '@/components/Etc/UseTodo.vue';
 import UseApi from '@/components/Etc/UseApi.vue';
 import UseTechnical from '@/components/Etc/UseTechnical.vue';
 import UseList from '@/components/List/use/UseList.vue';
+import UseDialog from '@/components/Dialog/use/UseDialog.vue';
+import UseExcelUploader from '@/components/ExcelUploader/use/UseExcelUploader.vue';
 
 const initialTabData = [
   { key: 'ToDo', label: 'To Do List' },
@@ -18,6 +20,8 @@ const initialTabData = [
   { key: 'Tab', label: 'Tab' },
   { key: 'TextBox', label: 'TextBox' },
   { key: 'List', label: 'List' },
+  { key: 'Dialog', label: 'Dialog' },
+  { key: 'ExcelUploader', label: 'ExcelUploader' },
 ];
 
 const tab = ref(Object.keys(initialTabData)[0]);
@@ -49,6 +53,12 @@ const tab = ref(Object.keys(initialTabData)[0]);
       <TabContent :tabValue="`List`">
         <UseList />
       </TabContent>
+      <TabContent :tabValue="`Dialog`">
+        <UseDialog />
+      </TabContent>
+      <TabContent tabValue="ExcelUploader">
+        <UseExcelUploader />
+      </TabContent>      
     </Tab>
   </VContainer>
 </template>

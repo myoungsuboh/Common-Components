@@ -27,8 +27,6 @@ build_job:
   stage: build
   tags:
     - ci-docker
-  only:
-    - main
   script:
     - echo "--- Installing dependencies and building project ---"
     - npm install
@@ -46,8 +44,6 @@ test_job:
   stage: test
   tags:
     - ci-docker
-  only:
-    - main
   script:
     - echo "--- Build artifact verified. ---"
   dependencies:
@@ -97,6 +93,13 @@ deploy_job:
 
     - docker exec "$NGINX_CONTAINER_NAME" sh -c "nginx -t && nginx -s reload"
 
-    - echo "--- Deployment complete! ---"        
+    - echo "--- Deployment complete! ---"
+
+    - echo "--- Starting Cleanup (Volume and System Prune) ---"
+    # 1. 사용하지 않는 모든 컨테이너, 네트워크, 익명 볼륨 정리
+    - docker system prune -f
+    # 2. Runner가 생성한 명명된 볼륨 삭제 (가장 중요한 부분)
+    - docker volume rm $(docker volume ls -q -f name=runner-) || true
+
   dependencies:
     - build_job # build_job에서 생성된 dist/ 폴더를 사용합니다.

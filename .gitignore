@@ -23,10 +23,11 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+.vite
 
 *.tsbuildinfo
-
 .eslintcache
+.gitlab-ci.yml
 
 # Cypress
 /cypress/videos/

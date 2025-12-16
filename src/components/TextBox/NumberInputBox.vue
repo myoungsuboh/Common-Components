@@ -7,6 +7,10 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  density: {
+    type: String,
+    default: 'compact', //"default" | "comfortable" | "compact";
+  },
 });
 
 const inputValue = defineModel('value', {
@@ -59,6 +63,7 @@ watch(inputValue, (nVal) => {
     v-bind="attrs"
     v-model:value="inputValue"
     type="text"
+    :density="density"
     @blur="setFixed($event)"
     @keydown.enter="setFixed($event)"
   />

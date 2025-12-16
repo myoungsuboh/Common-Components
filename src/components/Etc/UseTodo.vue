@@ -37,8 +37,26 @@ import CodeHighlight from 'vue-code-highlight/src/CodeHighlight.vue';
               - Button 클릭시 API 호출하여 데이터만 리턴하는 기능 필요
             </li>
             <li>
+              <h4>List</h4>
+              - 계층 구조의 데이터로 그룹핑 가능하도록 구현
+              <br />
+              - {{ `<List :data="data" ...` }}
+              <br />
+              - lv1
+              <br />
+              &nbsp;&nbsp;- lv1.1
+              <br />
+              - lv2 
+              <br />
+              &nbsp;&nbsp;- lv2.1
+            </li>
+            <li>
               <h4>ReadGrid 커스텀</h4>
               - Pagenation, 엑셀 출력
+            </li>
+            <li>
+              <h4>Node 서버 띄우기</h4>
+              - 웹으로 시각화
             </li>
           </ol>
         </div>

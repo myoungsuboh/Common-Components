@@ -51,8 +51,9 @@ const handleChangeLoading = () => {
           </span>
         </VCardText>
       </Card>
+      <VDivider class="border-opacity-100" color="black" />
       <!-- 2. Template Tag -->
-      <Card :loading="isLoading" class="my-15" :variant="'outlined'">
+      <Card :loading="isLoading" class="my-15" :variant="'outlined'" :draggable="true">
         <template #title>
           <h3>Use Type 2 : Template Tag</h3>
         </template>

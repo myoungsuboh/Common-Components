@@ -78,7 +78,7 @@ const handleError = (error) => {
         </li>
         <li class="mb-5">
           <h3>Color 버튼</h3>
-          <VCol cols="12">
+          <VCol cols="12" style="display: flex; gap: 5;">
             <Button color="blue" name="색상" />
             <Button
               style="background-color: red; width: 100px"
@@ -121,7 +121,7 @@ const handleError = (error) => {
         </li>
         <li class="mb-5">
           <h3>Variant 버튼</h3>
-          <VCol cols="12">
+          <VCol cols="12" style="display: flex; justify-content: space-between">
             <Button name="tonal" variant="tonal" />
             <Button name="outlined" variant="outlined" />
             <Button name="elevated" variant="elevated" />

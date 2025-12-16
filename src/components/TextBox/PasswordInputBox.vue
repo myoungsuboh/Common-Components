@@ -1,21 +1,7 @@
 <script setup>
+import InputBox from '@/components/TextBox/InputBox.vue';
+
 defineProps({
-  variant: {
-    type: String,
-    default: 'outlined', //"elevated" | "flat" | "outlined" | "plain" | "text" | "tonal";
-  },
-  density: {
-    type: String,
-    default: 'compact', //"default" | "comfortable" | "compact";
-  },
-  placeholder: {
-    type: String,
-    default: 'Enter your password',
-  },
-  hint: {
-    type: String,
-    default: '',
-  },
   pInnerIcon: {
     type: String,
     default: '',
@@ -40,14 +26,10 @@ const mValue = defineModel('value', {
 const visible = ref(false);
 </script>
 <template lang="">
-  <VTextField
+  <InputBox
     v-bind="attrs"
     :model-value="mValue"
     :type="visible ? 'text' : 'password'"
-    :density="density"
-    :variant="variant"
-    :hint="hint"
-    :placeholder="placeholder"
     :prepend-inner-icon="pInnerIcon"
     :append-inner-icon="visible ? aInnerOffIcon : aInnerOnIcon"
     @click:append-inner="visible = !visible"

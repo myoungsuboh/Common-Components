@@ -37,6 +37,8 @@ const props = defineProps({
   },
 });
 
+const attrs = useAttrs();
+
 const emit = defineEmits(['completed', 'error', 'click']);
 
 const getButtonColor = () => {
@@ -88,7 +90,7 @@ const handleButtonClick = (event) => {
 
 <template>
   <VBtn
-    v-bind="$attrs"
+    v-bind="attrs"
     :style="buttonStyle"
     :disabled="disabled || loading || isLoading"
     :loading="loading || isLoading"

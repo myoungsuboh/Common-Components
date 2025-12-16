@@ -27,17 +27,23 @@ const hasChildren = computed(() => {
   return props.item.child && props.item.child.length > 0;
 });
 
+const onSelectItem = inject('onSelectItem');
+
 const handleSelect = () => {
-  emit('selectItem', {
+  const payload = {
     name: props.item.name,
     data: props.item,
     value: props.value,
-  });
+  };
+
+  if (onSelectItem) {
+    onSelectItem(payload);
+  }
 };
 </script>
 
 <template>
-  <VListGroup v-if="hasChildren" :value="props.value">
+  <VListGroup v-if="hasChildren" :value="props.value" :model-value="true">
     <template v-slot:activator="{ props: activatorProps }">
       <VListItem
         v-bind="{ ...attrs, ...activatorProps }"

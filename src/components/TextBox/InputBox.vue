@@ -6,7 +6,7 @@ const props = defineProps({
   },
   clearable: {
     type: Boolean,
-    default: true,
+    default: false,
   },
   progressType: {
     type: String,
@@ -23,6 +23,18 @@ const props = defineProps({
   progressIndeterminate: {
     type: Boolean,
     default: false,
+  },
+  density: {
+    type: String,
+    default: 'compact', //"default" | "comfortable" | "compact";
+  },
+  placeholder: {
+    type: String,
+    default: '',
+  },
+  hint: {
+    type: String,
+    default: '',
   },
 });
 
@@ -52,9 +64,12 @@ const isProgressActive = computed(() => {
   <VTextField
     v-bind="attrs"
     v-model="value"
-    @blur="$emit('blur', $event)"
+    :hint="hint"
     :variant="variant"
+    :density="density"
     :clearable="clearable"
+    :placeholder="placeholder"
+    @blur="$emit('blur', $event)"
   >
     <template v-if="progressType === 'Linear'" v-slot:loader>
       <VProgressLinear
