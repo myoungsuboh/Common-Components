@@ -1,5 +1,5 @@
 <script setup>
-import InputBox from '@/components/TextBox/InputBox.vue';
+import InputBox from "@/components/TextBox/InputBox.vue";
 
 defineProps({
   // variant: {
@@ -8,7 +8,7 @@ defineProps({
   // },
 });
 
-const inputValue = defineModel('value', {
+const inputValue = defineModel("value", {
   type: [String, Number],
   default: null,
 });
@@ -17,6 +17,5 @@ const attrs = useAttrs();
 </script>
 <template lang="">
   <InputBox v-bind="attrs" v-model:value="inputValue" type="text" />
-  
 </template>
-<style lang=""></style>
+<style lang="scss" scoped></style>

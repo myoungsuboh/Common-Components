@@ -1,13 +1,15 @@
 <script setup>
-import Card from '@/components/Card/Card.vue';
-import Dialog from '@/components/Dialog/Dialog.vue';
-import Button from '@/components/Button/Button.vue';
-import CodeHighlight from 'vue-code-highlight/src/CodeHighlight.vue';
+import Card from "@/components/Card/Card.vue";
+import Dialog from "@/components/Dialog/Dialog.vue";
+import Button from "@/components/Button/Button.vue";
+import CodeHighlight from "vue-code-highlight/src/CodeHighlight.vue";
 
 const FirstDialogOpen = shallowRef(false);
 const SecondDialogOpen = shallowRef(false);
 const ThirdDialogOpen = shallowRef(false);
 const FourthDialogOpen = shallowRef(false);
+const MultiDialogOpen = shallowRef(false);
+const OrderDialogOpen = shallowRef(false);
 
 const handleFirstOpenModal = () => {
   FirstDialogOpen.value = !FirstDialogOpen.value;
@@ -24,6 +26,14 @@ const handleThirdOpenModal = () => {
 const handleFourthOpenModal = () => {
   FourthDialogOpen.value = !FourthDialogOpen.value;
 };
+
+const handleMultiOpenModal = () => {
+  MultiDialogOpen.value = !MultiDialogOpen.value;
+};
+
+const handleOtherOpenModal = () => {
+  OrderDialogOpen.value = !OrderDialogOpen.value;
+};
 </script>
 <template>
   <Card variant="elevated" class="pa-4">
@@ -33,25 +43,22 @@ const handleFourthOpenModal = () => {
         <p>Dialog 컴포넌트의 다양한 사용 예제를 확인할 수 있습니다.</p>
       </VCol>
       <VCol cols="12">
-        <Button name="Used TemplateId Dialog" @click="handleFirstOpenModal" />
+        <Button name="Used TemplateId Dialog" variant="outlined" @click="handleFirstOpenModal" />
       </VCol>
       <VCol cols="12">
-        <Button
-          name="UnUsed TemplateId Dialog"
-          @click="handleSecondOpenModal"
-        />
+        <Button name="UnUsed TemplateId Dialog" variant="outlined" @click="handleSecondOpenModal" />
       </VCol>
       <VCol cols="12">
-        <Button name="Used CardTag Dialog" @click="handleThirdOpenModal" />
+        <Button name="Used CardTag Dialog" variant="outlined" @click="handleThirdOpenModal" />
       </VCol>
       <VCol cols="12">
-        <Button name="Move Dialog" @click="handleFourthOpenModal" />
+        <Button name="Move Dialog" variant="outlined" @click="handleFourthOpenModal" />
       </VCol>
     </VRow>
     <!-- Used TemplateId Dialog -->
-    <Dialog v-model="FirstDialogOpen" persistent maxWidth="500">
+    <Dialog v-model="FirstDialogOpen" persistent maxWidth="800">
       <template #header>
-        <div class="pa-4">
+        <div class="pa-1">
           <h3>template id 사용</h3>
         </div>
       </template>
@@ -88,7 +95,7 @@ const handleFourthOpenModal = () => {
           </CodeHighlight>
         </VCardText>
         <div class="d-flex justify-end mt-4">
-          <Button name="확인" @click="handleSecondOpenModal" />
+          <Button name="확인" variant="outlined" @click="handleSecondOpenModal" />
         </div>
       </Card>
     </Dialog>
@@ -112,7 +119,7 @@ const handleFourthOpenModal = () => {
           </span>
         </VCardText>
         <VCardActions>
-          <Button name="확인" @click="handleThirdOpenModal" />
+          <Button name="닫기" variant="outlined" @click="handleThirdOpenModal" />
         </VCardActions>
       </Card>
     </Dialog>
@@ -121,9 +128,7 @@ const handleFourthOpenModal = () => {
       <Card variant="elevated" class="pa-4" draggable>
         <VCardTitle>
           <h3>Dialog move</h3>
-          <small class="text-caption">
-            ※ 이 다이얼로그는 마우스로 이동할 수 있습니다
-          </small>
+          <small class="text-caption"> ※ 이 다이얼로그는 마우스로 이동할 수 있습니다 </small>
         </VCardTitle>
         <VCardText class="bg-black">
           <CodeHighlight>
@@ -132,9 +137,8 @@ const handleFourthOpenModal = () => {
               <Card draggable />
             </Dialog>
 
-            Dialog 컴포넌트 바로 아래 Card 컴포넌트가 있어야 Drag 기능이
-            동작합니다. 즉. v-card-title 태그의 부모 요소가 Dialog 인 경우만
-            드래그 핸들로 인식됩니다. ` }}
+            Dialog 컴포넌트 바로 아래 Card 컴포넌트가 있어야 Drag 기능이 동작합니다. 즉. v-card-title 태그의 부모 요소가 Dialog 인 경우만 드래그
+            핸들로 인식됩니다. ` }}
           </CodeHighlight>
           <br />
           <Card
@@ -144,10 +148,10 @@ const handleFourthOpenModal = () => {
           />
         </VCardText>
         <VCardActions>
-          <Button name="확인" @click="handleFourthOpenModal" />
+          <Button name="닫기" variant="outlined" @click="handleFourthOpenModal" />
         </VCardActions>
       </Card>
     </Dialog>
   </Card>
 </template>
-<style lang=""></style>
+<style lang="scss" scoped></style>

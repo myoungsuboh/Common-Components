@@ -1,6 +1,5 @@
 <script setup>
-import Card from '@/components/Card/Card.vue';
-import Button from '@/components/Button/Button.vue';
+import Card from "@/components/Card/Card.vue";
 
 defineProps({
   // 다이얼로그 닫힘 방지
@@ -44,14 +43,12 @@ const attrs = useAttrs();
 
 const slots = useSlots();
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(["update:modelValue"]);
 
-const isStructural = computed(
-  () => slots.header || slots.body || slots.footer
-);
+const isStructural = computed(() => slots.header || slots.body || slots.footer);
 
 const handleUpdate = (nVal) => {
-  emit('update:modelValue', nVal);
+  emit("update:modelValue", nVal);
 };
 </script>
 <template>
@@ -64,15 +61,12 @@ const handleUpdate = (nVal) => {
       :eager="eager"
       :scrollable="scrollable"
       :fullscreen="fullscreen"
-      :draggable="draggable"
       @update:model-value="handleUpdate"
     >
       <Card v-if="isStructural" variant="elevated" :draggable="draggable">
-        <slot name="header">
-          <VCardTitle v-if="slots.header">
-            <slot name="header" />
-          </VCardTitle>
-        </slot>
+        <VCardTitle v-if="slots.header">
+          <slot name="header" />
+        </VCardTitle>
         <VCardText v-if="slots.body">
           <slot name="body" />
         </VCardText>
@@ -85,4 +79,4 @@ const handleUpdate = (nVal) => {
     </VDialog>
   </div>
 </template>
-<style lang=""></style>
+<style lang="scss" scoped></style>

@@ -2,7 +2,7 @@
 const props = defineProps({
   variant: {
     type: String,
-    default: 'outlined', //"outlined" | "underlined" | "solo" | "solo-filled" | "solo-inverted"
+    default: "outlined", //"outlined" | "underlined" | "solo" | "solo-filled" | "solo-inverted"
   },
   clearable: {
     type: Boolean,
@@ -10,11 +10,11 @@ const props = defineProps({
   },
   progressType: {
     type: String,
-    default: 'Circular', // "Circular", "Linear"
+    default: "Circular", // "Circular", "Linear"
   },
   progressColor: {
     type: String,
-    default: 'info',
+    default: "info",
   },
   progressHeight: {
     type: Number,
@@ -26,31 +26,31 @@ const props = defineProps({
   },
   density: {
     type: String,
-    default: 'compact', //"default" | "comfortable" | "compact";
+    default: "compact", //"default" | "comfortable" | "compact";
   },
   placeholder: {
     type: String,
-    default: '',
+    default: "",
   },
   hint: {
     type: String,
-    default: '',
+    default: "",
   },
 });
 
 const attrs = useAttrs();
 
-const value = defineModel('value', {
+const value = defineModel("value", {
   type: [String, Number],
   default: null,
 });
 
-const progressValue = defineModel('progressValue', {
+const progressValue = defineModel("progressValue", {
   type: [String, Number],
   default: null,
 });
 
-const emit = defineEmits(['blur']);
+const emit = defineEmits(["blur"]);
 
 const isProgressActive = computed(() => {
   const hasValue = !!progressValue.value;
@@ -82,14 +82,9 @@ const isProgressActive = computed(() => {
     </template>
     <template v-else v-slot:append-inner>
       <VFadeTransition v-if="isProgressActive" leave-absolute>
-        <VProgressCircular
-          v-model="progressValue"
-          :color="progressColor"
-          size="24"
-          :indeterminate="progressIndeterminate"
-        />
+        <VProgressCircular v-model="progressValue" :color="progressColor" size="24" :indeterminate="progressIndeterminate" />
       </VFadeTransition>
     </template>
   </VTextField>
 </template>
-<style lang=""></style>
+<style lang="scss" scoped></style>

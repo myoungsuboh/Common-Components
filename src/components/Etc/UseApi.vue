@@ -1,5 +1,5 @@
 <script setup>
-import CodeHighlight from 'vue-code-highlight/src/CodeHighlight.vue';
+import CodeHighlight from "vue-code-highlight/src/CodeHighlight.vue";
 
 const vueCode = `
 JWT토큰 전달,갱신방식
@@ -77,4 +77,4 @@ axios.interceptors.response.use(
     </VCardText>
   </VCard>
 </template>
-<style lang=""></style>
+<style lang="scss" scoped></style>

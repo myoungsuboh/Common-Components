@@ -1,15 +1,15 @@
 <script setup>
-import { computed, ref } from 'vue';
-import axios from 'axios';
+import axios from "axios";
+import { computed, ref } from "vue";
 
 const props = defineProps({
   name: {
     type: String,
-    default: '확인',
+    default: "",
   },
   type: {
     type: String,
-    default: 'normal',
+    default: "normal",
   },
   loading: {
     type: Boolean,
@@ -18,10 +18,6 @@ const props = defineProps({
   disabled: {
     type: Boolean,
     default: false,
-  },
-  variant: {
-    type: String,
-    default: 'outlined', // tonal, outlined, elevated, flat, text, plain
   },
   width: {
     type: [String, Number],
@@ -33,22 +29,22 @@ const props = defineProps({
   },
   api: {
     type: Object,
-    default: () => ({ url: '', params: {} }),
+    default: () => ({ url: "", params: {} }),
   },
 });
 
 const attrs = useAttrs();
 
-const emit = defineEmits(['completed', 'error', 'click']);
+const emit = defineEmits(["completed", "error", "click"]);
 
 const getButtonColor = () => {
-  if (props.type === 'normal') return undefined;
-  return props.type === 'confirm' ? 'green' : 'red';
+  if (props.type === "normal") return "black";
+  return props.type === "confirm" ? "green" : "red";
 };
 
 const formatSize = (size) => {
   if (!size) return undefined;
-  return typeof size === 'number' ? `${size}px` : size;
+  return typeof size === "number" ? `${size}px` : size;
 };
 
 const buttonStyle = computed(() => ({
@@ -67,23 +63,19 @@ const fnAxiosSearch = async () => {
   try {
     const res = await axios.get(props.api.url, { params: props.api.params });
 
-    emit('completed', res.data);
+    emit("completed", res.data);
   } catch (e) {
-    emit('error', e);
+    emit("error", e);
   } finally {
     isLoading.value = false;
   }
 };
 
 const handleButtonClick = (event) => {
-  if (
-    props.api &&
-    typeof props.api.url === 'string' &&
-    props.api.url.length > 0
-  ) {
+  if (props.api && typeof props.api.url === "string" && props.api.url.length > 0) {
     fnAxiosSearch();
   } else {
-    emit('click', event);
+    emit("click", event);
   }
 };
 </script>
@@ -92,12 +84,11 @@ const handleButtonClick = (event) => {
   <VBtn
     v-bind="attrs"
     :style="buttonStyle"
-    :disabled="disabled || loading || isLoading"
-    :loading="loading || isLoading"
-    :variant="variant"
+    :disabled="props.disabled || props.loading || isLoading"
+    :loading="props.loading || isLoading"
     @click="handleButtonClick"
   >
-    <slot>{{ name }}</slot>
+    <slot>{{ props.name }}</slot>
   </VBtn>
 </template>
 

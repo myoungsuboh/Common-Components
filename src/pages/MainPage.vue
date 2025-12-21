@@ -1,27 +1,35 @@
 <script setup>
-import { Tab, TabContent } from '@/components';
-import UseCard from '@/components/Card/use/UseCard.vue';
-import UseButton from '@/components/Button/use/UseButton.vue';
-import UseTab from '@/components/Tab/use/UseTab.vue';
-import UseTextBox from '@/components/TextBox/use/UseTextBox.vue';
-import UseTodo from '@/components/Etc/UseTodo.vue';
-import UseApi from '@/components/Etc/UseApi.vue';
-import UseTechnical from '@/components/Etc/UseTechnical.vue';
-import UseList from '@/components/List/use/UseList.vue';
-import UseDialog from '@/components/Dialog/use/UseDialog.vue';
-import UseExcelUploader from '@/components/ExcelUploader/use/UseExcelUploader.vue';
+import { Tab, TabContent } from "@/components";
+import UseCard from "@/components/Card/use/UseCard.vue";
+import UseButton from "@/components/Button/use/UseButton.vue";
+import UseTab from "@/components/Tab/use/UseTab.vue";
+import UseTextBox from "@/components/TextBox/use/UseTextBox.vue";
+import UseTodo from "@/components/Etc/UseTodo.vue";
+import UseApi from "@/components/Etc/UseApi.vue";
+import UseTechnical from "@/components/Etc/UseTechnical.vue";
+import UseList from "@/components/List/use/UseList.vue";
+import UseDialog from "@/components/Dialog/use/UseDialog.vue";
+import UseExcelUploader from "@/components/ExcelUploader/use/UseExcelUploader.vue";
+import TableLayoutCreator from "@/components/TableLayoutCreator/TableLayoutCreator.vue";
+import UseWebeditor from "@/components/Webeditor/use/UseWebeditor.vue";
+import UsePCol from "@/components/PCol/use/UsePCol.vue";
+import UseDatePicker from "@/components/DatePicker/use/UseDatePicker.vue";
 
 const initialTabData = [
-  { key: 'ToDo', label: 'To Do List' },
-  { key: 'Technical', label: 'Technical Notes' },
-  { key: 'UseApi', label: 'API Setting' },
-  { key: 'Card', label: 'Card' },
-  { key: 'Button', label: 'Button' },
-  { key: 'Tab', label: 'Tab' },
-  { key: 'TextBox', label: 'TextBox' },
-  { key: 'List', label: 'List' },
-  { key: 'Dialog', label: 'Dialog' },
-  { key: 'ExcelUploader', label: 'ExcelUploader' },
+  { key: "ToDo", label: "To Do List" },
+  { key: "Technical", label: "Technical Notes" },
+  { key: "UseApi", label: "API Setting" },
+  { key: "Card", label: "Card" },
+  { key: "Button", label: "Button" },
+  { key: "Tab", label: "Tab" },
+  { key: "TextBox", label: "TextBox" },
+  { key: "List", label: "List" },
+  { key: "Dialog", label: "Dialog" },
+  { key: "ExcelUploader", label: "ExcelUploader" },
+  { key: "TableLayout", label: "TableLayout" },
+  { key: "Webeditor", label: "Webeditor" },
+  { key: "PCol", label: "PCol" },
+  { key: "DatePicker", label: "DatePicker" },
 ];
 
 const tab = ref(Object.keys(initialTabData)[0]);
@@ -58,7 +66,19 @@ const tab = ref(Object.keys(initialTabData)[0]);
       </TabContent>
       <TabContent tabValue="ExcelUploader">
         <UseExcelUploader />
-      </TabContent>      
+      </TabContent>
+      <TabContent tabValue="TableLayout">
+        <TableLayoutCreator />
+      </TabContent>
+      <TabContent tabValue="Webeditor">
+        <UseWebeditor />
+      </TabContent>
+      <TabContent tabValue="PCol">
+        <UsePCol />
+      </TabContent>
+      <TabContent tabValue="DatePicker">
+        <UseDatePicker />
+      </TabContent>
     </Tab>
   </VContainer>
 </template>

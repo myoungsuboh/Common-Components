@@ -1,16 +1,16 @@
 <script setup>
-import InputBox from '@/components/TextBox/InputBox.vue';
-import TextInputBox from '@/components/TextBox/TextInputBox.vue';
-import NumberInputBox from '@/components/TextBox/NumberInputBox.vue';
-import EmailInputBox from '@/components/TextBox/EmailInputBox.vue';
-import PasswordInputBox from '@/components/TextBox/PasswordInputBox.vue';
+import InputBox from "@/components/TextBox/InputBox.vue";
+import TextInputBox from "@/components/TextBox/TextInputBox.vue";
+import NumberInputBox from "@/components/TextBox/NumberInputBox.vue";
+import EmailInputBox from "@/components/TextBox/EmailInputBox.vue";
+import PasswordInputBox from "@/components/TextBox/PasswordInputBox.vue";
 
-const defaultValue = ref('');
-const progressTextValue = ref('');
-const progress = ref('10');
-const textValue = ref('');
+const defaultValue = ref("");
+const progressTextValue = ref("");
+const progress = ref("10");
+const textValue = ref("");
 const numberValue = ref(1);
-const pwdTextValue = ref('password');
+const pwdTextValue = ref("password");
 </script>
 <template>
   <VCard class="pa-4">
@@ -34,27 +34,16 @@ const pwdTextValue = ref('password');
           <h3>ProgressInputBox</h3>
         </VCol>
         <VCol cols="6">
-          <InputBox
-            v-model:value="progressTextValue"
-            v-model:progress-value="progress"
-          />
+          <InputBox v-model:value="progressTextValue" v-model:progress-value="progress" />
         </VCol>
         <VCol cols="6">
           <InputBox v-model:value="progressTextValue" progressIndeterminate />
         </VCol>
         <VCol cols="6">
-          <InputBox
-            v-model:value="progressTextValue"
-            v-model:progress-value="progress"
-            :progressType="'Linear'"
-          />
+          <InputBox v-model:value="progressTextValue" v-model:progress-value="progress" :progressType="'Linear'" />
         </VCol>
         <VCol cols="6">
-          <InputBox
-            v-model:value="progressTextValue"
-            :progressType="'Linear'"
-            progressIndeterminate
-          />
+          <InputBox v-model:value="progressTextValue" :progressType="'Linear'" progressIndeterminate />
         </VCol>
         <!-- 3.문자 -->
         <VCol cols="12">
@@ -82,10 +71,7 @@ const pwdTextValue = ref('password');
           <h3>PasswordInputBox</h3>
         </VCol>
         <VCol cols="12">
-          <PasswordInputBox
-            v-model:value="pwdTextValue"
-            :pInnerIcon="'mdi-lock-outline'"
-          />
+          <PasswordInputBox v-model:value="pwdTextValue" :pInnerIcon="'mdi-lock-outline'" />
         </VCol>
       </VRow>
     </template>

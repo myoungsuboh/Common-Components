@@ -1,6 +1,6 @@
 <script setup>
-import Button from '@/components/Button/Button.vue';
-import Card from '@/components/Card/Card.vue';
+import Card from "@/components/Card/Card.vue";
+import Button from "@/components/Button/Button.vue";
 
 const isLoading = ref(false);
 
@@ -33,14 +33,10 @@ const handleChangeLoading = () => {
             <br />
             &nbsp;&nbsp; <<VCode>VCardItem</VCode>>
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<<VCode
-              >VCardTitle</VCode
-            >
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<<VCode>VCardTitle</VCode>
             />
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<<VCode
-              >VCardSubtitle</VCode
-            >
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<<VCode>VCardSubtitle</VCode>
             />
             <br />
             &nbsp;&nbsp;<<VCode>/VCardItem</VCode>>
@@ -81,4 +77,4 @@ const handleChangeLoading = () => {
     </VCardText>
   </VCard>
 </template>
-<style lang=""></style>
+<style lang="scss" scoped></style>

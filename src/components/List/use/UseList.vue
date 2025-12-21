@@ -1,44 +1,91 @@
 <script setup>
-import Card from '@/components/Card/Card.vue';
-import List from '@/components/List/List.vue';
+import Card from "@/components/Card/Card.vue";
+import List from "@/components/List/List.vue";
 
 const testData = ref([
   {
-    name: 'Dashboard',
+    name: "Dashboard",
     child: [],
   },
   {
-    name: 'Products',
+    name: "Products",
     child: [
       {
-        name: 'Electronics',
+        name: "Electronics",
         child: [
-          { name: 'Phones', child: [] },
-          { name: 'Laptops', child: [] },
+          { name: "Phones", child: [] },
+          { name: "Laptops", child: [] },
         ],
       },
       {
-        name: 'Clothing',
+        name: "Clothing",
         child: [
-          { name: 'Men', child: [] },
+          { name: "Men", child: [] },
           {
-            name: 'Women',
-            child: [{ name: 'Dresses', child: [] }],
+            name: "Women",
+            child: [{ name: "Dresses", child: [] }],
           },
         ],
       },
     ],
   },
   {
-    name: 'Settings',
+    name: "Settings",
     child: [],
   },
 ]);
 
-const expandAll = ref('collapse');
+const items = [
+  {
+    id: 1,
+    title: "Applications :",
+    children: [
+      { id: 2, title: "Calendar : app" },
+      { id: 3, title: "Chrome : app" },
+      { id: 4, title: "Webstorm : app" },
+    ],
+  },
+  {
+    id: 5,
+    title: "Documents :",
+    children: [
+      {
+        id: 6,
+        title: "vuetify :",
+        children: [
+          {
+            id: 7,
+            title: "src :",
+            children: [
+              { id: 8, title: "index : ts" },
+              { id: 9, title: "bootstrap : ts" },
+            ],
+          },
+        ],
+      },
+      {
+        id: 10,
+        title: "material2 :",
+        children: [
+          {
+            id: 11,
+            title: "src :",
+            children: [
+              { id: 12, title: "v-btn : ts" },
+              { id: 13, title: "v-card : ts" },
+              { id: 14, title: "v-window : ts" },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+];
+
+const expandAll = ref("collapse");
 
 const handleItemSelected = (dt) => {
-  console.log('handleItemSelected', dt);
+  console.log("handleItemSelected", dt);
 };
 </script>
 <template>
@@ -73,23 +120,19 @@ const handleItemSelected = (dt) => {
               <List
                 :data="testData"
                 :openAll="expandAll === 'expand'"
+                :openStrategy="expandAll === 'expand' ? 'multiple' : 'single'"
                 @selectItem="handleItemSelected"
               />
             </VCardText>
           </Card>
         </VCol>
+      </VRow>
+      <VRow>
         <VCol cols="12">
           <Card class="pa-4">
-            <VCardTitle class="d-flex justify-space-between">
-              <h5>고정</h5>
-            </VCardTitle>
+            <VCardTitle> TreeView 사용 예제 </VCardTitle>
             <VCardText>
-              <List
-                :data="testData"
-                openAll
-                :openStrategy="'multiple'"
-                @selectItem="handleItemSelected"
-              />
+              <VTreeview :items="items" item-value="id" open-on-click :openAll="expandAll === 'expand'" />
             </VCardText>
           </Card>
         </VCol>
@@ -97,4 +140,4 @@ const handleItemSelected = (dt) => {
     </VCardText>
   </Card>
 </template>
-<style lang=""></style>
+<style lang="scss" scoped></style>

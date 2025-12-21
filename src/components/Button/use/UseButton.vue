@@ -78,7 +78,7 @@ const handleError = (error) => {
         </li>
         <li class="mb-5">
           <h3>Color 버튼</h3>
-          <VCol cols="12" style="display: flex; gap: 5;">
+          <VCol cols="12" style="display: flex; gap: 5">
             <Button color="blue" name="색상" />
             <Button
               style="background-color: red; width: 100px"

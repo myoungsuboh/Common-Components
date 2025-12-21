@@ -1,5 +1,5 @@
 <script setup>
-import CodeHighlight from 'vue-code-highlight/src/CodeHighlight.vue';
+import CodeHighlight from "vue-code-highlight/src/CodeHighlight.vue";
 
 const vueCode = `
 공통 컴포넌트를 만들면서 대부분 사용하는 기능인 상속에 대한 내용입니다.
@@ -43,4 +43,4 @@ defineOptions({ inheritAttrs: false });
     </VCardText>
   </VCard>
 </template>
-<style lang=""></style>
+<style lang="scss" scoped></style>

@@ -1,6 +1,6 @@
 <script setup>
-import { useAttrs, defineProps } from 'vue';
-import { VCard } from 'vuetify/components'; // VCard 임포트 필요
+import { useAttrs } from 'vue';
+import { VCard } from 'vuetify/components';
 
 const props = defineProps({
   elevation: {
@@ -15,7 +15,6 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  // 💡 [NEW] Dialog에서 넘겨받을 drag prop 정의
   draggable: {
     type: Boolean,
     default: false,
@@ -34,10 +33,20 @@ const vDrag = {
     if (handle && dialog && dialog.classList.contains('v-overlay__content')) {
       handle.style.cursor = 'move';
 
-      handle.onmousedown = function (e) {
+      handle.onmousedown = (e) => {
         const coords = dialog.getBoundingClientRect();
         const shiftX = e.clientX - coords.left;
         const shiftY = e.clientY - coords.top;
+
+        const windowWidth = document.documentElement.clientWidth;
+        const windowHeight = document.documentElement.clientHeight;
+        const dialogWidth = coords.width;
+
+        const minX = -dialogWidth + 50; // 좌측 최소 경계 (다이얼로그 전체가 왼쪽으로 사라지는 지점)
+        const maxX = windowWidth - 50; // 우측 최대 경계 (다이얼로그가 우측 끝에 닿는 지점)
+
+        const minY = 0; // 상단 최소 경계
+        const maxY = windowHeight - 50; // 하단 최대 경계 (다이얼로그가 하단 끝에 닿는 지점)
 
         dialog.style.position = 'fixed';
         dialog.style.top = coords.top + 'px';
@@ -45,25 +54,50 @@ const vDrag = {
         dialog.style.margin = '0';
         dialog.style.transform = 'none';
 
-        function moveAt(pageX, pageY) {
-          dialog.style.left = pageX - shiftX + 'px';
-          dialog.style.top = pageY - shiftY + 'px';
-        }
+        const stopDrag = () => {
+          document.removeEventListener('mousemove', onMouseMove);
+          handle.onmouseup = null;
+          window.removeEventListener('mouseleave', stopDrag);
+        };
 
-        function onMouseMove(event) {
+        window.addEventListener('mouseleave', stopDrag);
+
+        const moveAt = (pageX, pageY) => {
+          let newLeft = pageX - shiftX;
+          let newTop = pageY - shiftY;
+
+          if (newLeft < minX) {
+            newLeft = minX;
+          } else if (newLeft > maxX) {
+            newLeft = maxX;
+          }
+
+          if (newTop < minY) {
+            newTop = minY;
+          } else if (newTop > maxY) {
+            newTop = maxY;
+          }
+
+          dialog.style.left = newLeft + 'px';
+          dialog.style.top = newTop + 'px';
+        };
+
+        const onMouseMove = (event) => {
           moveAt(event.clientX, event.clientY);
-        }
+        };
 
         document.addEventListener('mousemove', onMouseMove);
+
+        document.addEventListener('mouseup', stopDrag);
 
         handle.onmouseup = function () {
           document.removeEventListener('mousemove', onMouseMove);
           handle.onmouseup = null;
         };
       };
+
       handle.ondragstart = () => false;
     }
-    // else: VDialog 래퍼를 찾을 수 없거나 핸들이 없을 경우
   },
 };
 </script>

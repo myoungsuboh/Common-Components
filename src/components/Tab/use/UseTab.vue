@@ -121,10 +121,15 @@ const handleBeforeChange = (event) => {
                 <div v-for="value in 10">Content for Option {{ value }}</div>
               </TabContent>
               <TabContent class="pa-1" bg-color="red" :tabValue="'t3_tab_2'">
-                <div v-for="value in 30">Content for Option {{ value }}</div>
-              </TabContent>
-              <TabContent class="pa-1" bg-color="red" :tabValue="'t3_tab_3'">
                 <div v-for="value in 50">Content for Option {{ value }}</div>
+              </TabContent>
+              <TabContent
+                class="pa-1"
+                bg-color="red"
+                :tabValue="'t3_tab_3'"
+                :max-height="'45vh'"
+              >
+                <div v-for="value in 100">Content for Option {{ value }}</div>
               </TabContent>
             </Tab>
           </VCol>

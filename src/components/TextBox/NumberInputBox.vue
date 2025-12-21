@@ -1,6 +1,6 @@
 <script setup>
-import { watch } from 'vue';
-import InputBox from '@/components/TextBox/InputBox.vue';
+import { watch } from "vue";
+import InputBox from "@/components/TextBox/InputBox.vue";
 
 const props = defineProps({
   fixed: {
@@ -9,27 +9,35 @@ const props = defineProps({
   },
   density: {
     type: String,
-    default: 'compact', //"default" | "comfortable" | "compact";
+    default: "compact", //"default" | "comfortable" | "compact";
+  },
+  min: {
+    type: Number,
+    default: 0,
+  },
+  max: {
+    type: Number,
+    default: 100,
   },
 });
 
-const inputValue = defineModel('value', {
+const inputValue = defineModel("value", {
   type: [String, Number],
   default: null,
 });
 
 const attrs = useAttrs();
 
-const emit = defineEmits(['blur', 'keydown.enter']);
+const emit = defineEmits(["blur", "keydown.enter"]);
 
 const setFixed = (event) => {
-  let iVal = '0';
+  let iVal = "0";
   if (inputValue.value !== null && inputValue.value !== undefined) {
     iVal = inputValue.value.toString();
   }
 
-  if (iVal.includes('.')) {
-    const parts = iVal.split('.');
+  if (iVal.includes(".")) {
+    const parts = iVal.split(".");
 
     if (parts[1].length < 1) iVal = parts[0];
 
@@ -38,23 +46,27 @@ const setFixed = (event) => {
     }
   }
 
-  inputValue.value = typeof inputValue.value === 'number' ? +iVal : iVal;
+  inputValue.value = typeof inputValue.value === "number" ? +iVal : iVal;
 };
 
 watch(inputValue, (nVal) => {
   if (nVal !== null && nVal !== undefined) {
-    let processedVal = String(nVal).replace(/[^\d.]/g, '');
+    let processedVal = String(nVal).replace(/[^\d.]/g, "");
 
-    const parts = processedVal.split('.');
+    const parts = processedVal.split(".");
     if (parts.length > 2) {
-      processedVal = parts[0] + '.' + parts.slice(1).join('');
+      processedVal = parts[0] + "." + parts.slice(1).join("");
     }
 
-    if (processedVal.startsWith('.')) {
-      processedVal = '0' + processedVal;
+    if (processedVal.startsWith(".")) {
+      processedVal = "0" + processedVal;
     }
 
     inputValue.value = processedVal;
+
+    // min, max 값 설정
+
+    // 키보드 이벤트 위/아래 입력시 값 올리기
   }
 });
 </script>
