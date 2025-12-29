@@ -14,6 +14,7 @@ import TableLayoutCreator from "@/components/TableLayoutCreator/TableLayoutCreat
 import UseWebeditor from "@/components/Webeditor/use/UseWebeditor.vue";
 import UsePCol from "@/components/PCol/use/UsePCol.vue";
 import UseDatePicker from "@/components/DatePicker/use/UseDatePicker.vue";
+import UseAbstractSelect from "@/components/AbstractSelect/use/UseAbstractSelect.vue";
 
 const initialTabData = [
   { key: "ToDo", label: "To Do List" },
@@ -30,6 +31,7 @@ const initialTabData = [
   { key: "Webeditor", label: "Webeditor" },
   { key: "PCol", label: "PCol" },
   { key: "DatePicker", label: "DatePicker" },
+  { key: "AbstractSelect", label: "AbstractSelect" },
 ];
 
 const tab = ref(Object.keys(initialTabData)[0]);
@@ -75,6 +77,9 @@ const tab = ref(Object.keys(initialTabData)[0]);
       </TabContent>
       <TabContent tabValue="PCol">
         <UsePCol />
+      </TabContent>
+      <TabContent tabValue="AbstractSelect">
+        <UseAbstractSelect />
       </TabContent>
       <TabContent tabValue="DatePicker">
         <UseDatePicker />

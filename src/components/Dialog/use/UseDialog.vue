@@ -76,7 +76,7 @@ const handleOtherOpenModal = () => {
         </VCardText>
       </template>
       <template #footer>
-        <Button text="Agree" @click="handleFirstOpenModal" />
+        <Button name="Agree" variant="outlined" @click="handleFirstOpenModal" />
       </template>
     </Dialog>
     <!-- UnUsed TemplateId Dialog -->
