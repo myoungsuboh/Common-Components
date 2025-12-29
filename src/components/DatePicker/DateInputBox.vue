@@ -1,4 +1,5 @@
 <script setup>
+import Card from "@/components/Card/Card.vue";
 import Button from "@/components/Button/Button.vue";
 import InputBox from "@/components/TextBox/InputBox.vue";
 import DatePicker from "@/components/DatePicker/DatePicker.vue";
@@ -8,7 +9,7 @@ import { VMenu } from "vuetify/components";
 const props = defineProps({
   minWidth: {
     type: String,
-    default: "290px",
+    default: "350px",
   },
   hideWeekdays: {
     type: Boolean,
@@ -61,33 +62,36 @@ const handleShowPicker = (value) => {
   showMenu.value = value;
 };
 </script>
-<template lang="">
+<template>
   <VMenu
     v-model="showMenu"
     offset-y
     transition="slide-y-transition"
     :closeOnContentClick="false"
     :return-value.sync="date"
-    :min-width="props.minWidth"
+    :minWidth="props.minWidth"
     @update:visible="handleShowPicker"
   >
     <template v-slot:activator="{ props }">
       <InputBox v-model="date" prepend-icon="mdi-calendar" v-bind="{ ...attrs, ...props }"></InputBox>
     </template>
-    <DatePicker
-      no-title
-      scrollable
-      :hideWeekdays="props.hideWeekdays"
-      :color="props.color"
-      :headerColor="props.headerColor"
-      :mode="props.mode"
-      :model-value="date"
-      @update:model-value="updateDate"
-    />
-    <div class="d-flex justify-end">
-      <Button name="취소" color="primary" @click="handleShowPicker(false)"></Button>
-      <Button name="저장" color="primary" @click="handleSaveDate"></Button>
-    </div>
+    <Card>
+      <DatePicker
+        no-title
+        scrollable
+        :hideWeekdays="props.hideWeekdays"
+        :color="props.color"
+        :headerColor="props.headerColor"
+        :mode="props.mode"
+        :model-value="date"
+        :minWidth="props.minWidth"
+        @update:model-value="updateDate"
+      />
+      <div class="d-flex justify-end ga-2 pa-1">
+        <Button name="취소" color="primary" @click="handleShowPicker(false)"></Button>
+        <Button name="저장" color="primary" @click="handleSaveDate"></Button>
+      </div>
+    </Card>
   </VMenu>
 </template>
 <style lang="scss" scoped></style>

@@ -3,6 +3,7 @@ import Card from "@/components/Card/Card.vue";
 import Button from "@/components/Button/Button.vue";
 import DatePicker from "@/components/DatePicker/DatePicker.vue";
 import DateInputBox from "@/components/DatePicker/DateInputBox.vue";
+import DateRangeInput from "@/components/DatePicker/DateRangeInput.vue";
 
 const hideWeekdays1 = ref(true);
 const hideWeekdays2 = ref(true);
@@ -16,6 +17,14 @@ const handleChangeHideWeekdays2 = () => {
 };
 const handleChangeHideWeekdays3 = () => {
   return (hideWeekdays3.value = !hideWeekdays3.value);
+};
+
+const from = ref(new Date());
+const to = ref(new Date());
+
+const handleChangeDate = (newVal) => {
+  from.value = newVal.from;
+  to.value = newVal.to;
 };
 </script>
 <template>
@@ -115,6 +124,9 @@ const handleChangeHideWeekdays3 = () => {
     </VCol>
     <VCol cols="12">
       <DateInputBox mode="asdasd" />
+    </VCol>
+    <VCol cols="12">
+      <DateRangeInput mode="monthly" :from="from" :to="to" @update:modelValue="handleChangeDate" />
     </VCol>
   </VRow>
 </template>
