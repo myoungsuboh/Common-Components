@@ -15,6 +15,7 @@ import UseWebeditor from "@/components/Webeditor/use/UseWebeditor.vue";
 import UsePCol from "@/components/PCol/use/UsePCol.vue";
 import UseDatePicker from "@/components/DatePicker/use/UseDatePicker.vue";
 import UseAbstractSelect from "@/components/AbstractSelect/use/UseAbstractSelect.vue";
+import N8n from "@/components/N8n/use/UseN8n.vue";
 
 const initialTabData = [
   { key: "ToDo", label: "To Do List" },
@@ -32,6 +33,7 @@ const initialTabData = [
   { key: "PCol", label: "PCol" },
   { key: "DatePicker", label: "DatePicker" },
   { key: "AbstractSelect", label: "AbstractSelect" },
+  { key: "N8n", label: "N8n" },
 ];
 
 const tab = ref(Object.keys(initialTabData)[0]);
@@ -83,6 +85,9 @@ const tab = ref(Object.keys(initialTabData)[0]);
       </TabContent>
       <TabContent tabValue="DatePicker">
         <UseDatePicker />
+      </TabContent>
+      <TabContent tabValue="N8n">
+        <N8n />
       </TabContent>
     </Tab>
   </VContainer>
