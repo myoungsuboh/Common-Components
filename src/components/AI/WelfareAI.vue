@@ -2,7 +2,7 @@
 import axios from "axios";
 import { Button } from "@/components";
 
-const webhookURL = `https://pills-edit-enlargement-gem.trycloudflare.com/webhook/hnixChat`;
+const webhookURL = `https://pills-edit-enlargement-gem.trycloudflare.com/webhook/askAI2`;
 
 const props = defineProps({
   payload: {
