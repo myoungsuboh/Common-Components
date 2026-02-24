@@ -96,6 +96,11 @@ const handleFileUploadAns = (ans) => {
                 :payload="fileUploadTextValue"
                 @returnAns="handleFileUploadAns"
               />
+              <br />
+              <br />
+              <br />
+              <br />
+              AI 대답 : {{ fileUploadAns }}
             </VCardText>
           </Card>
         </VCol>

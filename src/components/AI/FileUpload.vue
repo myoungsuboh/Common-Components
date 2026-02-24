@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Button } from '@/components';
 
 // n8n Webhook URL
-const webhookURL = `https://pills-edit-enlargement-gem.trycloudflare.com/webhook-test/fileUpload2`;
+const webhookURL = `https://pills-edit-enlargement-gem.trycloudflare.com/webhook/fileUpload`;
 
 const props = defineProps({
   payload: {
@@ -58,8 +58,7 @@ const fnCallHnixChat = async () => {
 
     console.log('AI 답변:', res.data);
 
-    // n8n 응답 구조에 맞춰 수정 (예: res.data가 바로 텍스트일 수도 있고 객체일 수도 있음)
-    if (res.data) emit('returnAns', res.data);
+    if (res.data && res.data.answer) emit('returnAns', res.data.answer);
   } catch (e) {
     console.error('Error uploading file:', e);
     alert('파일 업로드 중 오류가 발생했습니다.');
