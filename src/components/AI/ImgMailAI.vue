@@ -2,7 +2,7 @@
 import axios from "axios";
 import { Button } from "@/components";
 
-const webhookURL = `https://pills-edit-enlargement-gem.trycloudflare.com/webhook/postImgMail`;
+const webhookURL = `https://exclusively-ron-dialogue-headset.trycloudflare.com/webhook/postImgMail`;
 
 const props = defineProps({
   payload: {
