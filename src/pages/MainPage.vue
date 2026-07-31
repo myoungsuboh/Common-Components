@@ -20,6 +20,7 @@ import UseSlickGrid from "@/components/SlickGrid/use/UseSlickGrid.vue";
 
 const initialTabData = [
   { key: "ToDo", label: "To Do List" },
+  { key: "SlickGrid", label: "SlickGrid" },
   { key: "Technical", label: "Technical Notes" },
   { key: "UseApi", label: "API Setting" },
   { key: "Card", label: "Card" },
@@ -35,7 +36,6 @@ const initialTabData = [
   { key: "DatePicker", label: "DatePicker" },
   { key: "AbstractSelect", label: "AbstractSelect" },
   { key: "AI", label: "AI" },
-  { key: "SlickGrid", label: "SlickGrid" },
 ];
 
 const tab = ref(Object.keys(initialTabData)[0]);

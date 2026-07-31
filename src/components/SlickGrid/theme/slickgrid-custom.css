@@ -30,7 +30,14 @@ slickgrid-theme-material.css 뒤에 로드되어 프로젝트 톤에 맞게 덮�
   /* ----- 프로젝트 톤 (여러 프로젝트에 투입할 때 이 값만 바꿉니다) ----- */
   --sg-primary: #1867c0; /* Vuetify 기본 primary와 동일 계열 */
   --sg-border-color: #e0e0e0;
-  --sg-header-bg: #f5f5f5;
+  /*
+   * 헤더 배경은 흰색이다.
+   * 회색으로 두면 정렬 화살표(▲▼)와 헤더 메뉴 버튼(v) 주변이 회색 사각형처럼 보인다.
+   * 헤더와 본문의 구분은 배경색이 아니라 아래쪽 경계선(--slick-header-column-border-bottom)으로 준다.
+   */
+  --sg-header-bg: #ffffff;
+  /* 합계 행은 본문과 구분되어야 하므로 회색을 유지한다 */
+  --sg-summary-bg: #f5f5f5;
   --sg-header-text: #37474f;
   --sg-row-hover: #f5f9ff;
   --sg-cell-selected: #e3f2fd;
@@ -311,6 +318,17 @@ width:100% + border-box 상태에서 padding-right를 주면 글자 영역만 �
   transform: translateY(-50%);
 }
 
+/*
+ * 헤더와 본문 구분선
+ *
+ * 헤더 배경이 흰색이라(정렬 화살표 주변이 회색으로 보이지 않도록) 배경색으로는 구분이 안 된다.
+ * --slick-header-column-border-bottom 변수는 이 테마에서 실제로 적용되지 않아(computed 0px none)
+ * 직접 지정한다.
+ */
+.sg-grid-wrapper .slick-header-columns {
+  border-bottom: 2px solid var(--sg-border-color);
+}
+
 /* ---------------------------------------------------------------------------------------------------------------
 헤더 컬럼명 세로 위치
 
@@ -490,12 +508,24 @@ DOM 구조 :
   gap: 3px;
 }
 
-/* ----- 검색 조건(연산자) 선택 ----- */
+/* ----- 검색 조건(연산자) 선택 -----
+ *
+ * 테마가 .input-group-addon 에 회색 배경(#eee)을 넣어서
+ * 조건 선택 박스 주변에 회색 사각형이 보인다. 투명으로 바꾼다.
+ * (배경은 안쪽 select 가 직접 갖는다)
+ */
 .sg-grid-wrapper .slick-filter .input-group-addon.operator {
   position: relative;
   flex: 0 0 26px;
   width: 26px;
   padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+/* 필터 셀 전체도 필터 행 배경을 그대로 쓰도록 (덧칠된 회색 제거) */
+.sg-grid-wrapper .slick-filter .input-group {
+  background: transparent;
 }
 
 .sg-grid-wrapper .slick-filter .input-group-addon.operator > select {
@@ -642,7 +672,7 @@ SlickGrid은 빈 footer 셀만 만들어주고 내용은 SlickGrid.vue가 채운
 본문과 구분되도록 배경과 굵기를 준다.
 --------------------------------------------------------------------------------------------------------------- */
 .sg-grid-wrapper .slick-footerrow-column {
-  background: var(--sg-header-bg);
+  background: var(--sg-summary-bg);
   border-top: 2px solid var(--sg-border-color);
   border-right: 1px solid var(--sg-border-color);
   font-weight: 600;
