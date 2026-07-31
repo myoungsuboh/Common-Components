@@ -535,6 +535,67 @@ const renderSummary = () => {
   }
 };
 
+/* ---------------------------------------------------------------------------------------------------------------
+전체 선택 체크박스 (좌측 상단) — 직접 구현
+
+내장 체크박스는 "선택"만 되고 "해제"가 되지 않아(useGridOptions의 checkboxSelector 주석 참고)
+hideSelectAllCheckbox로 숨기고 여기서 직접 만든다. 동작이 우리 코드 안에 있어 예측 가능하다.
+
+- 클릭 : 전부 선택된 상태면 해제, 아니면 전체 선택
+- 상태 : 선택 변경 시 체크/부분선택(indeterminate)을 갱신
+--------------------------------------------------------------------------------------------------------------- */
+const CHECKBOX_COLUMN_ID = "_checkbox_selector";
+
+/** 우리가 심은 전체선택 체크박스 */
+let selectAllEl = null;
+
+/** 선택 상태에 맞춰 체크박스 표시를 갱신 */
+const syncSelectAllCheckbox = () => {
+  if (!selectAllEl) return;
+
+  const total = instance.value?.dataView?.getLength?.() ?? 0;
+  const selected = instance.value?.slickGrid?.getSelectedRows?.()?.length ?? 0;
+
+  selectAllEl.checked = total > 0 && selected >= total;
+  // 일부만 선택된 상태를 시각적으로 구분
+  selectAllEl.indeterminate = selected > 0 && selected < total;
+};
+
+const wireSelectAllCheckbox = () => {
+  const grid = instance.value?.slickGrid;
+  if (!grid?.getHeaderColumn || !props.checkboxSelector || !props.multiSelect) return;
+
+  const headerEl = grid.getHeaderColumn(CHECKBOX_COLUMN_ID);
+  if (!headerEl) return;
+
+  const nameEl = headerEl.querySelector(".slick-column-name") ?? headerEl;
+  // 재생성 시 중복으로 쌓이지 않게 기존 것을 제거
+  nameEl.querySelector(".sg-selectall")?.remove();
+
+  const input = document.createElement("input");
+  input.type = "checkbox";
+  input.className = "sg-selectall";
+  input.title = "전체 선택 / 해제";
+  input.setAttribute("aria-label", "전체 선택 / 해제");
+
+  input.addEventListener("click", (event) => {
+    // 헤더 클릭이 정렬 등 다른 동작으로 이어지지 않게 막는다
+    event.stopPropagation();
+
+    const total = instance.value?.dataView?.getLength?.() ?? 0;
+    const selected = instance.value?.slickGrid?.getSelectedRows?.()?.length ?? 0;
+
+    if (total > 0 && selected >= total) instance.value?.slickGrid?.setSelectedRows([]);
+    else instance.value?.slickGrid?.setSelectedRows(Array.from({ length: total }, (_, i) => i));
+
+    syncSelectAllCheckbox();
+  });
+
+  nameEl.appendChild(input);
+  selectAllEl = input;
+  syncSelectAllCheckbox();
+};
+
 /**
  * rowMeta를 dataView에 연결
  *
@@ -627,6 +688,9 @@ const handleGridCreated = (e) => {
 
   // 행/셀 단위 제어(rowMeta)를 dataView에 연결
   wireRowMeta();
+
+  // 전체 선택 체크박스를 직접 심는다 (헤더 DOM이 만들어진 뒤여야 한다)
+  nextTick(wireSelectAllCheckbox);
 
   // 첫 서버 조회가 그리드 생성보다 먼저 끝난 경우 전체 건수를 여기서 반영한다
   if (serverTotalCount.value > 0) applyServerTotalCount();
@@ -749,7 +813,11 @@ const handleCellChange = (e) => {
   emit("on-cell-change", { ...args, item });
 };
 
-const handleSelectedRowsChanged = () => emit("on-selection-change", readSelection());
+const handleSelectedRowsChanged = () => {
+  // 행을 개별로 선택/해제해도 상단 전체선택 체크박스 상태가 따라가도록
+  syncSelectAllCheckbox();
+  emit("on-selection-change", readSelection());
+};
 
 const handleGridStateChanged = (e) => emit("on-grid-state-changed", e.detail);
 

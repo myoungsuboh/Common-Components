@@ -233,6 +233,44 @@ display를 바꾸지 않고 text-align만 사용한다 (위 주석 4번 참고).
 }
 
 /* ---------------------------------------------------------------------------------------------------------------
+전체 선택 체크박스 (좌측 상단)
+
+체크박스 선택 컬럼의 헤더에는 글자가 없고 체크박스 엘리먼트만 들어간다.
+위의 말줄임 규칙(overflow:hidden + nowrap)이 그대로 걸리면
+글자가 없어 줄 상자 높이가 0이 되고, 그 안의 17px 체크박스가 통째로 잘려 보이지 않는다.
+(기능은 살아 있어서 클릭은 되지만 화면에는 아무것도 안 보이는 상태가 된다)
+
+그래서 이 컬럼만 클리핑을 풀고 체크박스를 가운데 놓는다.
+--------------------------------------------------------------------------------------------------------------- */
+.sg-grid-wrapper .slick-header-column.header-checkbox-selectall .slick-column-name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  overflow: visible;
+}
+
+.sg-grid-wrapper .slick-header-column.header-checkbox-selectall {
+  cursor: pointer;
+}
+
+/*
+ * SlickGrid.vue가 직접 심는 전체선택 체크박스
+ *
+ * 부모(.slick-column-name)가 flex 컨테이너라서 flex-basis를 고정하지 않으면
+ * 기본 flex-shrink 때문에 폭이 0으로 줄어 보이지 않는다 (실측 0px).
+ */
+.sg-grid-wrapper .sg-selectall {
+  flex: 0 0 15px;
+  width: 15px;
+  height: 15px;
+  min-width: 15px;
+  margin: 0;
+  accent-color: var(--sg-primary);
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
 컬럼명과 헤더 메뉴 버튼(v) 겹침 방지
 
 .slick-header-menu-button 은 position:absolute; right:3px; width:22px 로 컬럼 우측에 떠 있는데

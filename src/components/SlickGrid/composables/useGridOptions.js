@@ -289,11 +289,21 @@ const featuresToOptions = (features) => {
        * 두 옵션 이름이 헷갈리기 쉬워 명시적으로 적어둔다.
        * (hideInFilterHeaderRow를 false로 주면 헤더가 아니라 필터 행에 체크박스가 생긴다)
        */
+      /*
+       * 내장 전체선택 체크박스는 숨기고 SlickGrid.vue가 직접 심는다.
+       *
+       * 이유 : 내장 체크박스는 "선택"만 되고 "해제"가 되지 않는다.
+       * 플러그인 handleHeaderClick 이 e.target 을 보고 분기하는데
+       *   - label을 누르면 e.target이 label이라 `type === 'checkbox'` 검사에서 걸려 그냥 반환
+       *   - 헤더 div 경로에서는 forceToggle이 false라 checked를 뒤집지 않고 현재 값을 그대로 읽음
+       * 결과적으로 상태가 한 방향(선택)으로만 진행된다.
+       * 래퍼에서 onHeaderClick을 받아 보정하는 방법도 실패했다(실제 클릭이 그 이벤트까지 오지 않음).
+       * 그래서 우리가 만든 체크박스로 selectAll/clearSelection을 직접 호출한다.
+       */
       options.checkboxSelector = {
         hideInColumnTitleRow: false,
         hideInFilterHeaderRow: true,
-        // 단일 선택 모드에서는 전체 선택이 의미가 없다
-        hideSelectAllCheckbox: !features.multiSelect,
+        hideSelectAllCheckbox: true,
         // 페이지를 넘겨도 선택이 유지되도록
         applySelectOnAllPages: true,
       };

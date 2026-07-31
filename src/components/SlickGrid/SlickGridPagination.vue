@@ -195,8 +195,13 @@ onBeforeUnmount(dispose);
 defineExpose({ init, dispose, renderPagination });
 </script>
 
+<!--
+  [주의] 루트 엘리먼트는 반드시 1개여야 한다 (script 주석 3번 참고).
+  주석조차 <template> 바로 아래(루트 위치)에 두면 Vue가 "주석 + div" 2개 루트로 취급해서
+  inst.$el 이 주석 노드가 되고, slickgrid-vue 의 container.appendChild(inst.$el) 가
+  화면에 아무것도 붙이지 못한다. 그래서 설명은 이 위치(template 밖)에 둔다.
+-->
 <template>
-  <!-- 루트 엘리먼트는 반드시 1개 (위 주석 3번 참고) -->
   <div ref="rootEl" class="sg-pagination" :class="`sg-pagination--${align}`">
     <!-- 건수 정보 -->
     <div class="sg-pagination__info">{{ rangeText }}</div>
