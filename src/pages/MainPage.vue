@@ -16,6 +16,7 @@ import UsePCol from "@/components/PCol/use/UsePCol.vue";
 import UseDatePicker from "@/components/DatePicker/use/UseDatePicker.vue";
 import UseAbstractSelect from "@/components/AbstractSelect/use/UseAbstractSelect.vue";
 import UseAI from "@/components/AI/use/UseAI.vue";
+import UseSlickGrid from "@/components/SlickGrid/use/UseSlickGrid.vue";
 
 const initialTabData = [
   { key: "ToDo", label: "To Do List" },
@@ -34,6 +35,7 @@ const initialTabData = [
   { key: "DatePicker", label: "DatePicker" },
   { key: "AbstractSelect", label: "AbstractSelect" },
   { key: "AI", label: "AI" },
+  { key: "SlickGrid", label: "SlickGrid" },
 ];
 
 const tab = ref(Object.keys(initialTabData)[0]);
@@ -88,6 +90,9 @@ const tab = ref(Object.keys(initialTabData)[0]);
       </TabContent>
       <TabContent tabValue="AI">
         <UseAI />
+      </TabContent>
+      <TabContent tabValue="SlickGrid">
+        <UseSlickGrid />
       </TabContent>
     </Tab>
   </VContainer>
