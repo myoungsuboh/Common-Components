@@ -29,11 +29,20 @@ SlickGrid 공통 컴포넌트
               래퍼가 절대 병목이 되지 않게 하는 장치. 막히면 여기로 내려가면 된다.
 --------------------------------------------------------------------------------------------------
 
-주의 : CSS는 전역으로 import 해야 한다.
+주의 1 : CSS는 전역으로 import 해야 한다.
        SlickGrid은 셀/헤더/스크롤바 등 수많은 DOM을 자체 클래스명으로 렌더하므로
        <style scoped> 안에서 @import 하면 스코프 속성이 붙지 않아 스타일이 대부분 적용되지 않는다.
+
+주의 2 : 반드시 ".lite" 테마를 쓴다. full 테마로 바꾸면 안 된다.
+       full 테마(slickgrid-theme-material.css)는 아이콘을 SVG 마스크 방식으로 그리려고
+       전역 `.mdi { background-color: currentColor; ... }` 규칙을 깔아버린다.
+       Vuetify(@mdi/font)의 폰트 기반 .mdi 아이콘에는 마스크가 없으므로
+       앱 전체의 모든 Vuetify 아이콘 자리에 글자색 사각형이 통째로 그려진다. (실제 사고)
+       lite 테마는 .mdi 규칙이 0개인, "호스트 앱이 이미 mdi 폰트를 가진 경우"용 공식 변형이다.
+       이때 그리드 메뉴의 아이콘(mdi-sort-ascending 등)은 호스트 앱의 @mdi/font 로 렌더되므로
+       이 컴포넌트를 쓰는 프로젝트는 @mdi/font 를 함께 설치해야 한다 (가이드 탭 참고).
 ******************************************************************************************************************/
-import "@slickgrid-universal/common/dist/styles/css/slickgrid-theme-material.css";
+import "@slickgrid-universal/common/dist/styles/css/slickgrid-theme-material.lite.css";
 import "./theme/slickgrid-custom.css";
 
 // 부모의 class/style이 최상위 div에 정상적으로 붙도록 자동 상속을 끄고 수동으로 상속한다.

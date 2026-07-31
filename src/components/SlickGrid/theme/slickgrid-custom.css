@@ -146,13 +146,24 @@ SlickGrid 변수 매핑
   --slick-compound-filter-operator-select-border: 1px solid var(--sg-border-color);
 
   /*
-   * 정렬 방향 아이콘(▲▼)
+   * 초록 기본값 일괄 정리
    *
-   * 테마 기본값이 초록(#009530)이라 컬럼을 정렬하면 뜬금없는 초록 화살표가 나타난다.
-   * 프로젝트 포인트 색으로 맞춘다.
+   * 이 테마(material)는 포인트 색 기본값이 초록 계열(#009530 / #00c840)이다.
+   * 정렬 화살표만 바꾸면 체크박스·그룹토글·컬럼선택기 등에서 초록이 계속 새어 나오므로
+   * lite 테마에서 초록 기본값을 갖는 변수를 전부 찾아(#009530|#00c840 grep) 프로젝트 색으로 덮는다.
    */
   --slick-icon-sort-color: var(--sg-primary);
   --slick-sorting-header-color: var(--sg-primary);
+  --slick-checkbox-icon-color: var(--sg-primary);
+  --slick-pagination-icon-color: var(--sg-primary);
+  --slick-multiselect-ok-button-text-color: var(--sg-primary);
+  --slick-icon-tree-load-fail-color: var(--sg-primary);
+  --slick-icon-group-color: var(--sg-primary);
+  --slick-draggable-group-toggle-all-icon-color: var(--sg-primary);
+  --slick-detail-view-icon-color: var(--sg-primary);
+  --slick-column-picker-icon-color: var(--sg-primary);
+  --slick-button-primary-bg-color: var(--sg-primary);
+  --slick-form-control-focus-border-color: var(--sg-primary);
 
   width: 100%;
   /* 필터 입력칸·페이지네이션처럼 inherit을 쓰는 하위 요소까지 서체가 통일되도록 */

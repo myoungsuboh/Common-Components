@@ -33,9 +33,18 @@ const section = ref("guide");
 const installCode = `# 세 패키지의 버전을 반드시 일치시킵니다
 pnpm add slickgrid-vue@10.8.3 @slickgrid-universal/common@10.8.3 @slickgrid-universal/excel-export@10.8.3
 
+# 아이콘 폰트도 필요합니다 (그리드 메뉴의 정렬/숨기기 아이콘이 이 폰트로 그려집니다)
+pnpm add @mdi/font
+# main.js 에서:  import '@mdi/font/css/materialdesignicons.css';
+
 # @slickgrid-universal/common 을 "직접 의존성"으로 설치하는 이유
 #   CSS 테마 파일을 import 하는데, pnpm은 전이 의존성을 top-level node_modules에 두지 않아
 #   (strict isolation) 직접 설치하지 않으면 CSS import가 실패합니다.
+
+# [중요] 테마는 반드시 ".lite" 버전을 씁니다 (SlickGrid.vue 가 이미 그렇게 import 함)
+#   full 테마는 전역 .mdi 규칙(background-color: currentColor)을 깔아서
+#   Vuetify 등 mdi 폰트를 쓰는 앱의 "모든 아이콘"이 사각형으로 깨집니다.
+#   lite 는 .mdi 규칙이 없는, 호스트 앱에 mdi 폰트가 있을 때 쓰는 공식 변형입니다.
 
 # 다른 프로젝트로 가져가기
 #   src/components/SlickGrid 폴더를 통째로 복사하면 됩니다.
