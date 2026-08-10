@@ -1,0 +1,435 @@
+/* ***************************************************************************************************************
+DevExtreme 그리드 커스텀 스타일
+
+dx.fluent.blue.light.css 뒤에 로드되어 프로젝트 톤에 맞게 덮어씁니다.
+
+--------------------------------------------------------------------------------------------------
+SlickGrid 때와 다른 점 (테마 CSS를 실제로 조사한 결과)
+--------------------------------------------------------------------------------------------------
+DevExtreme 테마 CSS 는 전부 `.dx-*` 접두사로 스코프되어 있다.
+전역 변수(:root), 맨몸 엘리먼트 셀렉터(body/input/button), 전체 셀렉터(*) 가 하나도 없고
+비-dx 셀렉터는 `.ql-clipboard`(HtmlEditor 용 Quill) 둘뿐이다.
+
+=> Vuetify 와 충돌하지 않는다.
+   (SlickGrid full 테마는 전역 `.mdi { background-color: currentColor }` 를 깔아서
+    앱 전체의 Vuetify 아이콘을 사각형으로 깨뜨렸다. 여기서는 그 위험이 없음을 확인했다)
+
+그래서 이 파일은 "충돌 방어"가 아니라 "톤 맞추기"만 담당한다.
+--------------------------------------------------------------------------------------------------
+
+프로젝트별로 색만 바꾸려면 아래 :root 의 --dxg-* 값만 수정하면 됩니다.
+****************************************************************************************************************** */
+
+:root {
+  /* ----- 프로젝트 톤 ----- */
+  --dxg-primary: #1867c0; /* Vuetify 기본 primary 와 같은 계열 */
+  --dxg-border-color: #e0e0e0;
+  --dxg-header-bg: #ffffff;
+  --dxg-header-text: #37474f;
+  --dxg-row-hover: #f5f9ff;
+  --dxg-row-selected: #e3f2fd;
+  --dxg-summary-bg: #f5f5f5;
+  --dxg-text: #212121;
+  --dxg-font-size: 13px;
+
+  /*
+   * 서체 — 국내 사무 환경 기준으로 맑은 고딕을 1순위로.
+   * 엑셀·워드·아래아한글이 쓰는 서체라 실무 사용자에게 익숙하고 Windows 기본 설치라 웹폰트가 필요 없다.
+   * (SlickGrid 공통 컴포넌트와 같은 스택을 쓴다)
+   */
+  --dxg-font-family: "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+래퍼
+--------------------------------------------------------------------------------------------------------------- */
+.dxg-wrapper {
+  /* 로딩 오버레이를 그리드 위에 겹치기 위한 기준점 */
+  position: relative;
+  width: 100%;
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+서체 · 크기
+
+DevExtreme 은 .dx-widget 에 자체 서체를 지정한다. 우리 서체로 통일한다.
+--------------------------------------------------------------------------------------------------------------- */
+.dxg-wrapper .dx-widget,
+.dxg-wrapper .dx-datagrid,
+.dxg-wrapper input,
+.dxg-wrapper select,
+.dxg-wrapper button,
+.dxg-wrapper textarea {
+  font-family: var(--dxg-font-family);
+}
+
+.dxg-wrapper .dx-datagrid {
+  font-size: var(--dxg-font-size);
+  color: var(--dxg-text);
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+헤더
+
+헤더 배경은 흰색이다. 회색으로 두면 정렬 화살표·필터 아이콘 주변이 회색 사각형처럼 보인다.
+(SlickGrid 작업에서 실제로 그 지적을 받았다)
+본문과의 구분은 배경색이 아니라 아래쪽 경계선으로 준다.
+--------------------------------------------------------------------------------------------------------------- */
+.dxg-wrapper .dx-datagrid-headers {
+  background-color: var(--dxg-header-bg);
+  color: var(--dxg-header-text);
+  font-weight: 600;
+  border-bottom: 2px solid var(--dxg-border-color);
+}
+
+.dxg-wrapper .dx-datagrid-headers .dx-datagrid-content .dx-datagrid-table .dx-row > td {
+  vertical-align: middle;
+}
+
+/*
+ * 컬럼명 정렬 (왼쪽 / 중앙 / 오른쪽) — 셀 정렬(alignment)과 독립이다.
+ * 급여 컬럼의 셀이 우측정렬이어도 컬럼명은 기본값인 가운데에 온다.
+ *
+ * *** !important 가 필요한 이유 ***
+ * DevExtreme 의 셀 팩토리(grid_core/views/m_columns_view.js _createCell)가
+ *   cell.style.textAlign = column.alignment
+ * 를 헤더 td 에도 인라인으로 박는다. 인라인 스타일은 클래스 규칙을 항상 이기므로
+ * !important 없이는 헤더가 셀 정렬을 그대로 따라간다.
+ * (처음 구현이 실제로 그랬다 — 컬럼명 중앙 정렬이 전혀 먹지 않았다)
+ *
+ * 클래스는 useGridColumns 가 컬럼의 cssClass 에 심는다.
+ * cssClass 는 헤더·본문·합계 셀에 모두 붙으므로 셀렉터를 헤더 안쪽으로 한정한다.
+ */
+.dxg-wrapper .dx-datagrid-headers .dx-datagrid-content .dx-datagrid-table .dx-row > td.dxg-h-left,
+.dxg-wrapper .dx-datagrid-headers .dx-datagrid-content .dx-datagrid-table .dx-row > td.dxg-h-left .dx-datagrid-text-content {
+  text-align: left !important;
+}
+
+.dxg-wrapper .dx-datagrid-headers .dx-datagrid-content .dx-datagrid-table .dx-row > td.dxg-h-center,
+.dxg-wrapper .dx-datagrid-headers .dx-datagrid-content .dx-datagrid-table .dx-row > td.dxg-h-center .dx-datagrid-text-content {
+  text-align: center !important;
+}
+
+.dxg-wrapper .dx-datagrid-headers .dx-datagrid-content .dx-datagrid-table .dx-row > td.dxg-h-right,
+.dxg-wrapper .dx-datagrid-headers .dx-datagrid-content .dx-datagrid-table .dx-row > td.dxg-h-right .dx-datagrid-text-content {
+  text-align: right !important;
+}
+
+/* 2단 헤더(밴드)의 묶음 제목 */
+.dxg-wrapper .dx-datagrid-headers .dx-datagrid-table .dx-row.dx-header-row > td.dx-datagrid-group-space {
+  background-color: var(--dxg-header-bg);
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+셀 · 행
+--------------------------------------------------------------------------------------------------------------- */
+
+/* 말줄임 — DevExtreme 기본 동작이지만 명시해 둔다.
+   컬럼에 ellipsis: false 를 주면 .dxg-no-ellipsis 가 붙어 여러 줄로 표시된다. */
+.dxg-wrapper .dx-datagrid-rowsview td:not(.dxg-no-ellipsis) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dxg-wrapper .dx-datagrid-rowsview td.dxg-no-ellipsis {
+  white-space: normal;
+  word-break: break-word;
+}
+
+/* 마우스 오버 강조 (DataGrid 에는 hoverStateEnabled 옵션이 없어 CSS 로 처리) */
+.dxg-wrapper .dx-datagrid-rowsview .dx-row.dx-data-row:hover > td {
+  background-color: var(--dxg-row-hover);
+}
+
+/* 선택된 행 */
+.dxg-wrapper .dx-datagrid-rowsview .dx-selection.dx-row:not(.dx-row-focused) > td {
+  background-color: var(--dxg-row-selected);
+  color: var(--dxg-text);
+}
+
+/*
+ * 숫자 정렬 (tabular numerals)
+ *
+ * 기본 서체는 숫자 글자폭이 달라(1이 좁고 0이 넓음) 금액 컬럼의 자릿수가 세로로 어긋난다.
+ * 우측정렬 셀에 고정폭 숫자를 적용하면 표에서 자릿수가 딱 맞는다.
+ */
+.dxg-wrapper .dx-datagrid-rowsview td[style*="text-align: right"],
+.dxg-wrapper .dx-datagrid-rowsview .dx-datagrid-summary-item {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+하단 합계 행
+--------------------------------------------------------------------------------------------------------------- */
+.dxg-wrapper .dx-datagrid-total-footer {
+  background-color: var(--dxg-summary-bg);
+  border-top: 2px solid var(--dxg-border-color);
+  font-weight: 600;
+}
+
+.dxg-wrapper .dx-datagrid-total-footer .dx-datagrid-summary-item {
+  color: var(--dxg-text);
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+페이지네이션 정렬 (왼쪽 / 중앙 / 오른쪽)
+
+DevExtreme pager 에는 정렬 옵션이 없어 CSS 로 처리한다.
+
+--------------------------------------------------------------------------------------------------
+실제 DOM (esm/__internal/pagination/content.js 확인)
+--------------------------------------------------------------------------------------------------
+  .dx-datagrid-pager.dx-pager          display:block  (flex 아님!)
+    ├ .dx-page-sizes                   float:left     [20][50][100][500]
+    └ .dx-pages                        float:right
+        ├ .dx-info                     "7페이지 중 1페이지 (137개 항목)"
+        └ .dx-page-indexes             [<][1][2]…[>]
+
+처음 구현은 "pager 내부가 flex" 라고 가정하고 .dx-pages 에 margin:auto 를 줬는데
+실제로는 float 이라 auto 마진이 0 으로 계산되어 아무 효과가 없었다. 반드시 DOM 을 먼저 확인할 것.
+
+--------------------------------------------------------------------------------------------------
+건드리면 안 되는 것 — 적응형 판정에 쓰이는 세 요소
+--------------------------------------------------------------------------------------------------
+esm/__internal/pagination/resizable_container.js 는 아래 세 요소의
+computed width + marginLeft + marginRight 를 직접 읽어서
+"정보 텍스트 숨김 -> compact(dx-light-mode) 전환" 을 결정한다.
+
+  .dx-page-sizes  /  .dx-info  /  .dx-page-indexes   <- pagesRef 는 .dx-pages 가 아니라 이쪽이다
+
+=> 이 세 요소에 margin:auto / flex-grow / width:100% 를 주면 측정값이 부풀어
+   멀쩡한 폭에서도 compact 로 튀거나, "정보 숨김 -> 폭 줄어듦 -> 다시 표시" 를 반복하며 깜빡인다.
+   따라서 이 셋은 flex: 0 0 auto (자연 폭) 로만 두고, 위치는
+   측정 대상이 아닌 .dx-pages / pager / 가상요소로만 제어한다.
+
+좁아지면 정보를 숨기고 그 다음 compact 로 바꾸는 반응형은 DevExtreme 이 이미 해준다.
+--------------------------------------------------------------------------------------------------------------- */
+.dxg-wrapper .dx-datagrid-pager {
+  border-top: 1px solid var(--dxg-border-color);
+}
+
+/* 테마의 float 배치를 flex 로 전환. 측정 대상 3요소는 자연 폭을 유지시킨다. */
+.dxg-wrapper .dx-datagrid-pager.dx-pager {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.dxg-wrapper .dx-datagrid-pager.dx-pager > .dx-page-sizes {
+  float: none;
+  flex: 0 0 auto;
+}
+
+/* .dx-pages 는 측정 대상이 아니므로 자유롭게 늘릴 수 있다 */
+.dxg-wrapper .dx-datagrid-pager.dx-pager > .dx-pages {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+  float: none;
+}
+
+.dxg-wrapper .dx-datagrid-pager .dx-info,
+.dxg-wrapper .dx-datagrid-pager .dx-page-indexes {
+  flex: 0 0 auto;
+}
+
+/* ----- 왼쪽 : [번호][정보] ......... [페이지크기] ----- */
+.dxg-wrapper.dxg-pager--left .dx-datagrid-pager > .dx-pages {
+  justify-content: flex-start;
+}
+
+.dxg-wrapper.dxg-pager--left .dx-datagrid-pager > .dx-page-sizes {
+  order: 2; /* 페이지크기 선택기를 오른쪽 끝으로 */
+}
+
+.dxg-wrapper.dxg-pager--left .dx-datagrid-pager .dx-info {
+  order: 2; /* 번호가 왼쪽 끝에 붙도록 정보를 번호 뒤로 */
+}
+
+/* ----- 오른쪽 : [페이지크기] ......... [정보][번호] ----- */
+.dxg-wrapper.dxg-pager--right .dx-datagrid-pager > .dx-pages {
+  justify-content: flex-end;
+}
+
+/*
+ * ----- 중앙 : [페이지크기 좌측고정] ... [번호 정중앙] ... [정보 우측고정] -----
+ *
+ * 번호를 "pager 전체의 정중앙"에 두려면 좌우 요소가 흐름에서 빠져야 한다.
+ * (흐름에 두면 폭이 다른 좌우 요소만큼 중심이 밀린다)
+ * 절대배치는 두 요소의 computed width 를 자연 폭으로 유지하므로 위 측정식에 영향이 없다.
+ */
+.dxg-wrapper.dxg-pager--center .dx-datagrid-pager > .dx-page-sizes {
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
+}
+
+.dxg-wrapper.dxg-pager--center .dx-datagrid-pager .dx-info {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+}
+
+.dxg-wrapper.dxg-pager--center .dx-datagrid-pager > .dx-pages {
+  /* 좌우 고정 요소 자리를 비워 두어 번호가 그 위로 넘어가지 않게 한다 */
+  justify-content: center;
+  padding: 0 clamp(0px, 20%, 210px);
+}
+
+/*
+ * compact(dx-light-mode) 로 바뀌면 번호가 입력창 하나로 줄고 폭 여유가 없어져
+ * 절대배치한 좌우 요소와 겹친다. 이때는 절대배치를 풀고 한 줄에 나란히 둔다.
+ * (dx-light-mode 는 pager 루트에 붙는다 — content.js getClasses)
+ */
+.dxg-wrapper.dxg-pager--center .dx-datagrid-pager.dx-light-mode > .dx-page-sizes,
+.dxg-wrapper.dxg-pager--center .dx-datagrid-pager.dx-light-mode .dx-info {
+  position: static;
+  transform: none;
+}
+
+.dxg-wrapper.dxg-pager--center .dx-datagrid-pager.dx-light-mode > .dx-pages {
+  justify-content: center;
+  padding: 0;
+}
+
+/* 현재 페이지 강조 */
+.dxg-wrapper .dx-datagrid-pager .dx-page.dx-selection {
+  background-color: var(--dxg-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+리치 셀 (버튼 / 체크박스 / 이미지 / 첨부 / 링크)
+--------------------------------------------------------------------------------------------------------------- */
+.dxg-wrapper .dxg-cell-btn {
+  height: 22px;
+  padding: 0 10px;
+  border: 1px solid var(--dxg-border-color);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--dxg-text);
+  font-size: 12px;
+  font-family: inherit;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+
+.dxg-wrapper .dxg-cell-btn:hover:not(:disabled) {
+  background: var(--dxg-primary);
+  border-color: var(--dxg-primary);
+  color: #fff;
+}
+
+.dxg-wrapper .dxg-cell-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.dxg-wrapper .dxg-cell-checkbox {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--dxg-primary);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.dxg-wrapper .dxg-cell-img {
+  max-width: 100%;
+  object-fit: contain;
+  vertical-align: middle;
+  border-radius: 3px;
+}
+
+.dxg-wrapper .dxg-cell-file,
+.dxg-wrapper .dxg-cell-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  color: var(--dxg-primary);
+  text-decoration: none;
+}
+
+.dxg-wrapper .dxg-cell-file:hover,
+.dxg-wrapper .dxg-cell-link:hover {
+  text-decoration: underline;
+}
+
+.dxg-wrapper .dxg-cell-file__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+검색 필터 행 · 그룹 패널
+--------------------------------------------------------------------------------------------------------------- */
+.dxg-wrapper .dx-datagrid-filter-row .dx-editor-cell .dx-texteditor-input {
+  font-size: 12px;
+}
+
+.dxg-wrapper .dx-datagrid-group-panel {
+  border-bottom: 1px dashed var(--dxg-border-color);
+  background: #fbfbfb;
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+조회 중 오버레이
+--------------------------------------------------------------------------------------------------------------- */
+.dxg-wrapper .dxg-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.dxg-wrapper .dxg-loading__box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid var(--dxg-border-color);
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
+  font-size: var(--dxg-font-size);
+  color: var(--dxg-text);
+}
+
+.dxg-wrapper .dxg-loading__spinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid var(--dxg-border-color);
+  border-top-color: var(--dxg-primary);
+  border-radius: 50%;
+  animation: dxg-spin 0.7s linear infinite;
+}
+
+@keyframes dxg-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 애니메이션을 줄이도록 설정한 사용자는 회전 대신 흐리게만 */
+@media (prefers-reduced-motion: reduce) {
+  .dxg-wrapper .dxg-loading__spinner {
+    animation: none;
+    opacity: 0.6;
+  }
+}

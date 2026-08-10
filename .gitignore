@@ -14,6 +14,15 @@ dist-ssr
 coverage
 *.local
 
+# 환경변수 — 상용 라이브러리 라이선스 키(VITE_DEVEXTREME_LICENSE_KEY 등)가 들어간다.
+# 키를 저장소에 커밋하지 않기 위한 것이므로 지우지 말 것.
+.env
+.env.*
+!.env.example
+
+# Claude Code 로컬 작업 디렉터리 (미리보기 설정 · 워크트리)
+.claude/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
