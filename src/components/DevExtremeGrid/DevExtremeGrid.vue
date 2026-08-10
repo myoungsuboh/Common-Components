@@ -2,7 +2,7 @@
 import { ref, computed, watch, useAttrs } from "vue";
 import { DxDataGrid } from "devextreme-vue/data-grid";
 
-import { buildColumns, buildSummaryItems, safeUrl } from "./composables/useGridColumns";
+import { buildColumns, buildSummaryItems, applyFillColumn, safeUrl } from "./composables/useGridColumns";
 import { buildGridOptions, applyKoreanLocale, applyLicense, hasLicense } from "./composables/useGridOptions";
 
 /* ***************************************************************************************************************
@@ -106,8 +106,37 @@ const props = defineProps({
     default: "right",
     validator: (v) => ["left", "center", "right"].includes(v),
   },
-  /** 페이지당 건수 셀렉터 표시 */
+  /** 페이지당 건수 선택 표시 */
   paginationShowPageSize: { type: Boolean, default: true },
+  /** <pre>
+   * 페이지당 건수를 고르는 방식 : input | buttons
+   *
+   * input   : 목록에서 고르거나 직접 숫자를 입력할 수 있는 입력창 (기본)
+   * buttons : DevExtreme 기본 방식인 [20][50][100][500] 버튼
+   * </pre> */
+  paginationPageSizeMode: {
+    type: String,
+    default: "input",
+    validator: (v) => ["input", "buttons"].includes(v),
+  },
+  /** 페이지당 건수 입력창 라벨 (paginationPageSizeMode: 'input' 일 때) */
+  paginationPageSizeLabel: { type: String, default: "페이지당" },
+  /** 페이지당 건수 직접 입력 허용 범위 */
+  paginationPageSizeMin: { type: Number, default: 1 },
+  paginationPageSizeMax: { type: Number, default: 1000 },
+  /** "N페이지 중 M페이지 (전체 K개 항목)" 안내 표시 */
+  paginationShowInfo: { type: Boolean, default: true },
+  /** 페이지 번호 버튼(1 2 3 …) 표시 */
+  paginationShowPages: { type: Boolean, default: true },
+  /** 이전/다음 이동 버튼 표시 */
+  paginationShowNavigation: { type: Boolean, default: true },
+  /** <pre>
+   * 표를 컨테이너 가로 폭에 꽉 채웁니다.
+   *
+   * true (기본) : 남는 공간까지 컬럼이 늘어나 표가 컨테이너를 꽉 채웁니다.
+   * false       : 컬럼을 내용 크기에 맞춥니다. 합계가 컨테이너보다 좁으면 표도 좁게 남습니다.
+   * </pre> */
+  fitWidth: { type: Boolean, default: true },
   /** 헤더를 상단 패널로 드래그해서 그룹핑 */
   groupable: { type: Boolean, default: false },
   /** 컬럼 표시/숨김 선택기 */
@@ -170,6 +199,8 @@ const emit = defineEmits([
   "on-dirty-change",
   /** 엑셀 내보내기 완료 */
   "on-export-complete",
+  /** 페이지당 건수 변경 */
+  "on-page-size-change",
   /** 오류 */
   "on-error",
 ]);
@@ -212,15 +243,18 @@ const createRowNumberColumn = () => ({
 });
 
 watch(
-  () => props.columns,
-  (cols) => {
+  [() => props.columns, () => props.fitWidth],
+  ([cols, fitWidth]) => {
     const built = buildColumns(cols, {
       warn: props.warnInvalidColumns,
       headerAlign: props.headerAlign,
       ellipsis: props.ellipsis,
     });
 
-    dxColumns.value = props.rowNumber ? [createRowNumberColumn(), ...built] : built;
+    const all = props.rowNumber ? [createRowNumberColumn(), ...built] : built;
+
+    // 행번호 컬럼까지 포함한 최종 목록에서 폭을 계산해야 비율이 맞는다
+    dxColumns.value = fitWidth ? applyFillColumn(all) : all;
   },
   { immediate: true, deep: true },
 );
@@ -252,7 +286,11 @@ const gridOptions = computed(() =>
       pageable: props.pageable,
       pageSize: props.pageSize,
       pageSizes: props.pageSizes,
-      paginationShowPageSize: props.paginationShowPageSize,
+      // 입력창 방식일 때는 DevExtreme 기본 버튼을 숨기고 우리 컨트롤을 쓴다
+      paginationShowPageSize: props.paginationShowPageSize && props.paginationPageSizeMode === "buttons",
+      paginationShowInfo: props.paginationShowInfo,
+      paginationShowNavigation: props.paginationShowNavigation,
+      fitWidth: props.fitWidth,
       groupable: props.groupable,
       columnChooser: props.columnChooser,
       columnFixing: props.columnFixing,
@@ -585,6 +623,80 @@ defineExpose({
 
 const handleInitialized = (e) => emit("on-grid-created", { instance: e.component, component: gridRef.value });
 
+/* ---------------------------------------------------------------------------------------------------------------
+페이지당 건수 입력창
+
+DevExtreme 기본 페이지크기 선택기는 [20][50][100][500] 버튼이라
+목록에 없는 값을 쓸 수 없고 개수가 늘면 자리를 많이 차지한다.
+그래서 "목록에서 고르거나 직접 숫자를 입력할 수 있는" 입력창을 우리가 만든다.
+
+<input list> + <datalist> 를 쓰는 이유
+  선택과 자유 입력을 하나의 기본 컨트롤로 처리할 수 있다.
+  (select + 별도 입력칸 두 개를 두면 조작이 번거롭고, 커스텀 드롭다운을 만들면
+   키보드·접근성을 직접 구현해야 한다)
+
+이 컴포넌트는 Vuetify 에 의존하지 않는다(여러 프로젝트에 그대로 넣기 위한 격리 원칙)에 따라
+Vuetify 컴포넌트를 쓰지 않고, 겉모습만 Vuetify 입력창 톤에 맞춰 CSS 로 그린다.
+
+DevExtreme 위젯의 pageSize()/pageIndex() 는 실제 공개 메서드다
+(grid_core/data_controller/m_data_controller.js publicMethods() 에 포함).
+--------------------------------------------------------------------------------------------------------------- */
+
+/** 화면에 표시하는 페이지당 건수 */
+const pageSizeValue = ref(props.pageSize);
+
+/** datalist 는 문서 전체에서 유일한 id 가 필요하다 (한 화면에 그리드가 여러 개 있을 수 있다) */
+const pageSizeListId = `dxg-pagesize-${Math.random().toString(36).slice(2, 9)}`;
+
+/** 입력창 방식으로 페이지당 건수를 직접 그릴지 */
+const showPageSizeInput = computed(() => props.pageable && props.paginationShowPageSize && props.paginationPageSizeMode === "input");
+
+watch(
+  () => props.pageSize,
+  (size) => {
+    pageSizeValue.value = size;
+  },
+);
+
+/** 위젯이 스스로 페이지크기를 바꾼 경우(상태 복원 등) 입력창을 따라가게 한다 */
+const onOptionChanged = (e) => {
+  if (e.fullName === "paging.pageSize" && Number.isFinite(e.value)) pageSizeValue.value = e.value;
+};
+
+/**
+ * 페이지당 건수 적용
+ *
+ * 범위를 벗어난 값은 잘라서 되돌려 준다(빈 값으로 두면 그리드가 0건을 그린다).
+ * 페이지 크기가 바뀌면 첫 페이지로 돌아가야 한다 — 5페이지를 보다가 500건으로 바꾸면
+ * 존재하지 않는 페이지에 남아 빈 화면이 되기 때문이다.
+ */
+const applyPageSize = (raw, el) => {
+  const grid = widget();
+  const parsed = Number.parseInt(raw, 10);
+  const current = grid?.pageSize?.() ?? props.pageSize;
+
+  const size = Number.isFinite(parsed) ? Math.min(Math.max(parsed, props.paginationPageSizeMin), props.paginationPageSizeMax) : current;
+
+  pageSizeValue.value = size;
+
+  /*
+   * 입력창을 항상 확정된 값으로 되돌려 놓는다.
+   *
+   * :value 바인딩만 믿으면 안 된다 — 거절·보정한 값이 직전 값과 같으면 ref 가 바뀌지 않아
+   * Vue 가 DOM 을 다시 그리지 않고, 사용자가 입력한 잘못된 문자열(빈 값 등)이 그대로 남는다.
+   * (실제로 빈 값을 넣었을 때 입력창이 비어 있는 상태로 남는 것을 확인했다)
+   */
+  if (el) el.value = String(size);
+
+  if (!grid) return;
+  if (grid.pageSize() !== size) {
+    grid.pageSize(size);
+    grid.pageIndex(0);
+  }
+
+  emit("on-page-size-change", { pageSize: size });
+};
+
 /** 부모가 넘긴 class/style 만 최상위 div 로 넘긴다 */
 const attrs = useAttrs();
 const wrapperAttrs = computed(() => ({ class: attrs.class, style: attrs.style }));
@@ -595,7 +707,11 @@ const passthroughAttrs = computed(() => {
 </script>
 
 <template>
-  <div class="dxg-wrapper" :class="`dxg-pager--${paginationAlign}`" v-bind="wrapperAttrs">
+  <div
+    class="dxg-wrapper"
+    :class="[`dxg-pager--${paginationAlign}`, { 'dxg-pager--no-pages': !paginationShowPages, 'dxg-has-pagesize-input': showPageSizeInput }]"
+    v-bind="wrapperAttrs"
+  >
     <!-- 3층 : 슬롯 (그리드 위 영역) -->
     <slot name="toolbar" />
 
@@ -606,6 +722,7 @@ const passthroughAttrs = computed(() => {
       :summary="summaryConfig"
       v-bind="{ ...gridOptions, ...passthroughAttrs }"
       @initialized="handleInitialized"
+      @option-changed="onOptionChanged"
       @row-click="onRowClick"
       @row-dbl-click="onRowDblClick"
       @selection-changed="onSelectionChanged"
@@ -672,6 +789,36 @@ const passthroughAttrs = computed(() => {
         </a>
       </template>
     </DxDataGrid>
+
+    <!--
+      페이지당 건수 입력창
+
+      페이저 행의 빈 쪽에 겹쳐 놓는다. DevExtreme 페이저 안에 우리 DOM 을 넣으면
+      페이저가 다시 그려질 때(페이지 이동 등) 지워지므로, 우리가 소유한 위치에 둔다.
+      좌/우 배치는 페이지 번호와 겹치지 않는 쪽으로 CSS 가 정한다.
+    -->
+    <div v-if="showPageSizeInput" class="dxg-pagesize">
+      <label class="dxg-pagesize__label" :for="pageSizeListId + '-input'">{{ paginationPageSizeLabel }}</label>
+      <div class="dxg-pagesize__field">
+        <input
+          :id="pageSizeListId + '-input'"
+          class="dxg-pagesize__input"
+          type="number"
+          inputmode="numeric"
+          :list="pageSizeListId"
+          :min="paginationPageSizeMin"
+          :max="paginationPageSizeMax"
+          :value="pageSizeValue"
+          :aria-label="paginationPageSizeLabel + ' 건수'"
+          @change="applyPageSize($event.target.value, $event.target)"
+          @keyup.enter="applyPageSize($event.target.value, $event.target)"
+        />
+        <datalist :id="pageSizeListId">
+          <option v-for="size in pageSizes" :key="size" :value="size" />
+        </datalist>
+      </div>
+      <span class="dxg-pagesize__unit">건</span>
+    </div>
 
     <!-- 3층 : 슬롯 (그리드 아래 영역) -->
     <slot name="footer" />

@@ -58,9 +58,12 @@ describe('buildGridOptions - 기본값', () => {
     const options = buildGridOptions();
 
     expect(options.showBorders).toBe(BASE_OPTIONS.showBorders);
-    expect(options.columnAutoWidth).toBe(true);
     expect(options.allowColumnResizing).toBe(true);
     expect(options.sorting).toEqual({ mode: 'multiple' });
+  });
+
+  it('columnAutoWidth 는 BASE_OPTIONS 가 아니라 fitWidth 플래그가 정한다', () => {
+    expect(BASE_OPTIONS).not.toHaveProperty('columnAutoWidth');
   });
 
   it('빈 데이터 안내 문구가 한글이다', () => {
@@ -73,6 +76,27 @@ describe('buildGridOptions - 기본값', () => {
 
   it('DataGrid에 없는 옵션(hoverStateEnabled)을 넣지 않는다 — 행 강조는 CSS로 처리한다', () => {
     expect(buildGridOptions()).not.toHaveProperty('hoverStateEnabled');
+  });
+});
+
+/* ---------------------------------------------------------------------------------------------------------------
+가로 폭 채우기
+
+columnAutoWidth: true 는 "컬럼을 내용 크기에 맞춘다"이므로 표가 컨테이너보다 좁게 남을 수 있다.
+표를 꽉 채우려면 false 여야 한다. (실제 컬럼 폭 조정은 useGridColumns 의 applyFillColumn 이 담당)
+--------------------------------------------------------------------------------------------------------------- */
+describe('buildGridOptions - 가로 폭 채우기', () => {
+  it('기본값은 채우기다 (columnAutoWidth: false)', () => {
+    expect(buildGridOptions().columnAutoWidth).toBe(false);
+    expect(buildGridOptions({ fitWidth: true }).columnAutoWidth).toBe(false);
+  });
+
+  it('fitWidth: false 면 내용 크기에 맞춘다 (columnAutoWidth: true)', () => {
+    expect(buildGridOptions({ fitWidth: false }).columnAutoWidth).toBe(true);
+  });
+
+  it('사용자 options 로 직접 덮을 수 있다', () => {
+    expect(buildGridOptions({ fitWidth: true }, { columnAutoWidth: true }).columnAutoWidth).toBe(true);
   });
 });
 
@@ -137,8 +161,26 @@ describe('buildGridOptions - 페이지네이션 / 가상 스크롤', () => {
     expect(buildGridOptions({ pageable: true, pageSizes: [10, 20] }).pager.allowedPageSizes).toEqual([10, 20]);
   });
 
-  it('페이지 크기 선택기를 숨길 수 있다', () => {
-    expect(buildGridOptions({ pageable: true, paginationShowPageSize: false }).pager.showPageSizeSelector).toBe(false);
+  it('페이저 구성요소를 각각 끌 수 있다', () => {
+    const options = buildGridOptions({
+      pageable: true,
+      paginationShowPageSize: false,
+      paginationShowInfo: false,
+      paginationShowNavigation: false,
+    });
+
+    expect(options.pager.showPageSizeSelector).toBe(false);
+    expect(options.pager.showInfo).toBe(false);
+    expect(options.pager.showNavigationButtons).toBe(false);
+  });
+
+  it('아무것도 지정하지 않으면 페이저 구성요소가 모두 켜진다 (기본 옵션 전부 포함)', () => {
+    const options = buildGridOptions({ pageable: true });
+
+    expect(options.pager.showPageSizeSelector).toBe(true);
+    expect(options.pager.showInfo).toBe(true);
+    expect(options.pager.showNavigationButtons).toBe(true);
+    expect(options.pager.visible).toBe(true);
   });
 
   it('페이징을 끄고 높이를 고정하면 가상 스크롤로 대용량을 처리한다', () => {

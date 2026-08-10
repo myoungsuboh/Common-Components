@@ -6,6 +6,7 @@ import {
   buildSummaryItems,
   groupIntoBands,
   flattenColumns,
+  applyFillColumn,
   formatNumberText,
   safeUrl,
   SUPPORTED_COLUMN_TYPES,
@@ -209,6 +210,156 @@ describe('buildColumns - cssClass 병합', () => {
   it('그리드 기본 ellipsis: false를 컬럼에서 되돌릴 수 있다', () => {
     const [col] = buildColumns([{ field: 'a', ellipsis: true }], { warn: false, ellipsis: false });
 
+    expect(col.cssClass).not.toContain('dxg-no-ellipsis');
+  });
+});
+
+/* ---------------------------------------------------------------------------------------------------------------
+가로 폭 채우기 (fitWidth / fill)
+
+실제 버그: 모든 컬럼에 width 를 주면 DevExtreme 이 그리드 루트에 인라인 max-width(= 컬럼 폭 합계)를 박아
+표가 컨테이너보다 좁게 남았다(래퍼 1026px / 표 982px). 인라인이라 CSS 로는 못 덮는다.
+폭을 비워 둔 컬럼을 하나 만들면 그 조건(!hasAutoWidth)이 깨져 제한이 걸리지 않는다.
+--------------------------------------------------------------------------------------------------------------- */
+describe('applyFillColumn - 가로 폭 채우기', () => {
+  /** 축약 정의 -> 컬럼 -> 폭 채우기 (래퍼가 하는 순서와 같다) */
+  const fill = (cols) => applyFillColumn(buildColumns(cols, { warn: false }));
+
+  const WIDTHS = [
+    { field: 'empNo', header: '사번', width: 100 },
+    { field: 'memo', header: '비고', width: 300 },
+    { field: 'useYn', header: '사용', type: 'yn', width: 100 },
+  ];
+
+  it('기본은 비율 유지 — px 폭을 % 로 바꿔 전체가 함께 늘어난다', () => {
+    const cols = fill(WIDTHS);
+
+    // 100 : 300 : 100 = 20% : 60% : 20%
+    expect(cols.map((c) => c.width)).toEqual(['20.0000%', '60.0000%', '20.0000%']);
+  });
+
+  it('% 합이 100 이 된다 (가로 스크롤이 생기지 않도록)', () => {
+    const total = fill([{ field: 'a', width: 110 }, { field: 'b', width: 120 }, { field: 'c', width: 130 }])
+      .map((c) => Number.parseFloat(c.width))
+      .reduce((sum, v) => sum + v, 0);
+
+    expect(total).toBeCloseTo(100, 3);
+  });
+
+  it('지정했던 px 는 minWidth 로 남아 좁은 화면에서도 뭉개지지 않는다', () => {
+    const cols = fill(WIDTHS);
+
+    expect(cols.map((c) => c.minWidth)).toEqual([100, 300, 100]);
+  });
+
+  it('한 컬럼만 부풀지 않는다 (급여 150px 이 394px 이 되던 문제)', () => {
+    const cols = fill([
+      { field: 'a', width: 110 },
+      { field: 'b', width: 110 },
+      { field: 'c', width: 150 },
+      { field: 'd', width: 120 },
+    ]);
+
+    const percents = cols.map((c) => Number.parseFloat(c.width));
+    // 원래 비율(110:110:150:120)이 유지된다
+    expect(percents[2] / percents[0]).toBeCloseTo(150 / 110, 4);
+  });
+
+  it('fill: true 를 주면 그 컬럼만 남는 공간을 흡수한다', () => {
+    const cols = fill([{ field: 'a', width: 100 }, { field: 'memo', width: 200, fill: true }, { field: 'b', width: 80 }]);
+
+    expect(cols[0].width).toBe(100);
+    expect(cols[1].width).toBeUndefined();
+    expect(cols[1].minWidth).toBe(200);
+    expect(cols[2].width).toBe(80);
+  });
+
+  it('폭 없는 컬럼이 이미 있으면 아무것도 바꾸지 않는다 (DevExtreme 이 알아서 늘린다)', () => {
+    const cols = fill([{ field: 'a', width: 100 }, { field: 'b' }]);
+
+    expect(cols[0].width).toBe(100);
+    expect(cols[1].width).toBeUndefined();
+    expect(cols[1].minWidth).toBeUndefined();
+  });
+
+  it("px 가 아닌 폭('30%' 등)이 섞이면 손대지 않는다 (사용자 의도를 알 수 없다)", () => {
+    const cols = fill([{ field: 'a', width: '30%' }, { field: 'b', width: 100 }]);
+
+    expect(cols[0].width).toBe('30%');
+    expect(cols[1].width).toBe(100);
+  });
+
+  it('사용자가 지정한 minWidth 는 덮지 않는다', () => {
+    const cols = fill([{ field: 'a', width: 300, minWidth: 120 }, { field: 'b', width: 100 }]);
+
+    expect(cols[0].minWidth).toBe(120);
+  });
+
+  it('밴드(2단 헤더) 안쪽 컬럼도 대상이다', () => {
+    const cols = fill([
+      { field: 'a', width: 100, group: '기본' },
+      { field: 'b', width: 300, group: '기본' },
+    ]);
+
+    const inner = flattenColumns(cols);
+    expect(inner.map((c) => c.width)).toEqual(['25.0000%', '75.0000%']);
+    // 밴드 부모는 폭을 갖지 않는다
+    expect(cols[0].width).toBeUndefined();
+  });
+
+  it('행번호처럼 나중에 앞에 붙인 컬럼까지 함께 계산된다', () => {
+    const rowNumber = { caption: 'No', width: 60 };
+    const cols = applyFillColumn([rowNumber, ...buildColumns([{ field: 'a', width: 140 }], { warn: false })]);
+
+    expect(cols.map((c) => c.width)).toEqual(['30.0000%', '70.0000%']);
+  });
+
+  it('빈 배열이나 배열이 아닌 값에도 안전하다', () => {
+    expect(applyFillColumn([])).toEqual([]);
+    expect(applyFillColumn(null)).toBeNull();
+    expect(applyFillColumn(undefined)).toBeUndefined();
+  });
+
+  it('축약 키 fill 이 DevExtreme Column 에 남지 않는다', () => {
+    const [col] = buildColumns([{ field: 'a', width: 100, fill: true }], { warn: false });
+
+    expect(col.fill).toBeUndefined();
+    expect(col.sgFill).toBe(true);
+  });
+});
+
+/* ---------------------------------------------------------------------------------------------------------------
+리치 셀 말줄임
+
+실제 버그: 텍스트용 말줄임 규칙이 버튼 셀에도 걸려 "수정 ..." 처럼 의미 없는 점 세 개가 붙었다.
+(테마의 셀 좌우 패딩 21px 때문에 폭 70px 컬럼의 내용 폭이 27px 뿐이어서 45px 버튼이 넘쳤다)
+--------------------------------------------------------------------------------------------------------------- */
+describe('buildColumns - 리치 셀 말줄임 제외', () => {
+  it('리치 셀에는 dxg-cell--rich 가 붙는다', () => {
+    const cols = buildColumns(
+      [
+        { name: 'edit', type: 'button' },
+        { field: 'ok', type: 'checkbox' },
+        { field: 'photo', type: 'image' },
+        { field: 'attach', type: 'file' },
+        { field: 'url', type: 'link' },
+      ],
+      { warn: false },
+    );
+
+    expect(cols.every((c) => c.cssClass.includes('dxg-cell--rich'))).toBe(true);
+  });
+
+  it('일반 텍스트 컬럼에는 붙지 않는다 (말줄임이 필요하다)', () => {
+    const [col] = buildColumns([{ field: 'memo', type: 'text' }], { warn: false });
+
+    expect(col.cssClass).not.toContain('dxg-cell--rich');
+  });
+
+  it('리치 셀에는 dxg-no-ellipsis 를 붙이지 않는다 (역할이 겹친다)', () => {
+    const [col] = buildColumns([{ name: 'edit', type: 'button', ellipsis: false }], { warn: false });
+
+    expect(col.cssClass).toContain('dxg-cell--rich');
     expect(col.cssClass).not.toContain('dxg-no-ellipsis');
   });
 });

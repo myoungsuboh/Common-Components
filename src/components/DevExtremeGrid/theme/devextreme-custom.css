@@ -126,7 +126,7 @@ DevExtreme 은 .dx-widget 에 자체 서체를 지정한다. 우리 서체로 �
 
 /* 말줄임 — DevExtreme 기본 동작이지만 명시해 둔다.
    컬럼에 ellipsis: false 를 주면 .dxg-no-ellipsis 가 붙어 여러 줄로 표시된다. */
-.dxg-wrapper .dx-datagrid-rowsview td:not(.dxg-no-ellipsis) {
+.dxg-wrapper .dx-datagrid-rowsview td:not(.dxg-no-ellipsis):not(.dxg-cell--rich) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -135,6 +135,24 @@ DevExtreme 은 .dx-widget 에 자체 서체를 지정한다. 우리 서체로 �
 .dxg-wrapper .dx-datagrid-rowsview td.dxg-no-ellipsis {
   white-space: normal;
   word-break: break-word;
+}
+
+/*
+ * 리치 셀 (버튼 / 체크박스 / 이미지 / 첨부 / 링크)
+ *
+ * 이 셀은 텍스트가 아니라 UI 요소라서 말줄임 대상이 아니다.
+ * 텍스트용 규칙을 그대로 두면 버튼 옆에 의미 없는 "..." 이 붙는다.
+ *
+ * 원인: Fluent 테마의 셀 좌우 패딩이 21px 씩이라 폭 70px 컬럼의 실제 내용 폭은 27px 뿐이다.
+ * 45px 버튼이 넘쳐 text-overflow 가 발동해 "수정 ..." 으로 보였다.
+ * => 말줄임을 끄고, 리치 셀에서는 패딩을 줄여 버튼이 들어갈 자리를 만든다.
+ */
+.dxg-wrapper .dx-datagrid-rowsview td.dxg-cell--rich {
+  overflow: hidden;
+  padding-right: 4px;
+  padding-left: 4px;
+  text-overflow: clip;
+  white-space: nowrap;
 }
 
 /* 마우스 오버 강조 (DataGrid 에는 hoverStateEnabled 옵션이 없어 CSS 로 처리) */
@@ -296,6 +314,124 @@ computed width + marginLeft + marginRight 를 직접 읽어서
 .dxg-wrapper.dxg-pager--center .dx-datagrid-pager.dx-light-mode > .dx-pages {
   justify-content: center;
   padding: 0;
+}
+
+/*
+ * ----- 페이지 번호 버튼 끄기 -----
+ *
+ * DevExtreme 에는 "번호만 숨기기" 옵션이 없어 CSS 로 처리한다.
+ *
+ * 번호를 감싸는 .dx-page-indexes 를 통째로 숨기면 안 된다.
+ * 그 안에 이전/다음 버튼도 같이 들어 있어서 이동 수단이 전부 사라진다.
+ * (compact 모드에서는 페이지 입력창까지 이 안에 있다)
+ * 그래서 번호 버튼(.dx-page)만 숨기고 이동 버튼은 남긴다.
+ */
+.dxg-wrapper.dxg-pager--no-pages .dx-datagrid-pager .dx-page-indexes .dx-page {
+  display: none;
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+페이지당 건수 입력창 (목록 선택 + 직접 입력)
+
+DevExtreme 페이저 안에 우리 DOM 을 넣으면 페이저가 다시 그려질 때 지워지므로
+래퍼가 소유한 요소를 페이저 행에 겹쳐 놓는다.
+
+배치 규칙 : 페이지 번호가 있는 쪽을 피한다.
+  - 정렬 left  -> 번호가 왼쪽에 있으니 입력창은 오른쪽
+  - 정렬 center/right -> 입력창은 왼쪽
+--------------------------------------------------------------------------------------------------------------- */
+.dxg-wrapper .dxg-pagesize {
+  position: absolute;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 56px; /* 페이저 행 높이 — 세로 중앙을 맞추기 위한 값 */
+  font-size: 12px;
+  color: var(--dxg-text);
+  pointer-events: none; /* 빈 영역이 페이저 클릭을 가로채지 않도록 */
+}
+
+.dxg-wrapper .dxg-pagesize > * {
+  pointer-events: auto;
+}
+
+.dxg-wrapper.dxg-pager--left .dxg-pagesize {
+  right: 16px;
+}
+
+.dxg-wrapper.dxg-pager--center .dxg-pagesize,
+.dxg-wrapper.dxg-pager--right .dxg-pagesize {
+  left: 16px;
+}
+
+/* 중앙 정렬일 때는 DevExtreme 기본 페이지크기 버튼 자리를 우리 입력창이 대신 쓴다 */
+.dxg-wrapper.dxg-has-pagesize-input.dxg-pager--center .dx-datagrid-pager > .dx-pages {
+  padding: 0 clamp(0px, 20%, 210px);
+}
+
+.dxg-wrapper .dxg-pagesize__label {
+  white-space: nowrap;
+  color: #616161;
+}
+
+/*
+ * 입력창 겉모습 — Vuetify 텍스트필드 톤 (variant="outlined", density="compact")
+ * 이 컴포넌트는 Vuetify 에 의존하지 않으므로 클래스가 아니라 CSS 로 모양만 맞춘다.
+ */
+.dxg-wrapper .dxg-pagesize__field {
+  display: flex;
+  align-items: center;
+  border: 1px solid rgb(0 0 0 / 38%);
+  border-radius: 4px;
+  background: #fff;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.dxg-wrapper .dxg-pagesize__field:hover {
+  border-color: rgb(0 0 0 / 60%);
+}
+
+.dxg-wrapper .dxg-pagesize__field:focus-within {
+  border-color: var(--dxg-primary);
+  box-shadow: inset 0 0 0 1px var(--dxg-primary);
+}
+
+.dxg-wrapper .dxg-pagesize__input {
+  width: 68px;
+  height: 30px;
+  padding: 0 6px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.dxg-wrapper .dxg-pagesize__input:focus {
+  outline: none;
+}
+
+/* 숫자 입력의 위/아래 화살표는 남겨 둔다 — 마우스만으로도 조절할 수 있어 편하다 */
+
+.dxg-wrapper .dxg-pagesize__unit {
+  white-space: nowrap;
+  color: #616161;
+}
+
+/* 좁은 화면에서 페이저가 compact 로 바뀌면 겹치므로 라벨을 줄인다 */
+@media (max-width: 720px) {
+  .dxg-wrapper .dxg-pagesize__label {
+    display: none;
+  }
+
+  .dxg-wrapper .dxg-pagesize__input {
+    width: 56px;
+  }
 }
 
 /* 현재 페이지 강조 */

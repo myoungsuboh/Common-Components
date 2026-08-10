@@ -63,7 +63,7 @@ export const hasLicense = () => !!import.meta.env?.VITE_DEVEXTREME_LICENSE_KEY;
 const BASE_OPTIONS = {
   // ----- 항상 켜두는 것 (그리드의 기본값이지 선택사항이 아님) -----
   showBorders: true,
-  columnAutoWidth: true,
+  // columnAutoWidth 는 fitWidth 기능 플래그가 정한다 (featuresToOptions 참고)
   // 컬럼 순서 변경 / 폭 조절
   allowColumnReordering: true,
   allowColumnResizing: true,
@@ -132,6 +132,19 @@ const featuresToOptions = (features) => {
   const height = toFixedPx(features.height);
   const width = toFixedPx(features.width);
 
+  /*
+   * ----- 가로 폭 채우기 -----
+   *
+   * columnAutoWidth: true  -> 컬럼을 "내용 크기"에 맞춘다.
+   *   컬럼 폭 합계가 컨테이너보다 좁으면 표도 그만큼 좁게 남아 오른쪽에 빈 공간이 생긴다.
+   *   (실제로 래퍼 1026px 인데 표가 컬럼 합계인 982px 로 남는 것을 확인했다)
+   *
+   * columnAutoWidth: false -> 표가 컨테이너 폭을 채우고, 폭을 지정하지 않은 컬럼이 남는 공간을 나눠 갖는다.
+   *
+   * 업무 화면에서는 표가 카드 폭을 꽉 채우는 쪽이 자연스러워서 fitWidth 기본값을 true 로 둔다.
+   */
+  options.columnAutoWidth = features.fitWidth === false;
+
   // ----- 행 고유 키 -----
   // 선택/편집/갱신이 이 필드를 기준으로 동작한다
   if (features.idField) options.keyExpr = features.idField;
@@ -181,9 +194,10 @@ const featuresToOptions = (features) => {
       visible: true,
       showPageSizeSelector: features.paginationShowPageSize !== false,
       allowedPageSizes: features.pageSizes ?? [20, 50, 100, 500],
-      showInfo: true,
-      showNavigationButtons: true,
-      // 좌/중앙/우 배치는 CSS 로 처리한다 (DevExtreme 에 정렬 옵션이 없음)
+      showInfo: features.paginationShowInfo !== false,
+      showNavigationButtons: features.paginationShowNavigation !== false,
+      // 좌/중앙/우 배치와 "페이지 번호 숨기기"는 CSS 로 처리한다
+      // (DevExtreme 에 정렬 옵션이 없고, 번호만 끄는 옵션도 없다)
     };
   } else {
     options.paging = { enabled: false };

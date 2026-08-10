@@ -174,6 +174,7 @@ const SHORTHAND_KEYS = [
   'checkedValue',
   'uncheckedValue',
   'ellipsis',
+  'fill',
 ];
 
 /**
@@ -253,6 +254,8 @@ const toDxColumn = (col, defaults = {}) => {
 
   if (col.width !== undefined) column.width = col.width;
   if (col.minWidth !== undefined) column.minWidth = col.minWidth;
+  // 남는 가로 공간을 이 컬럼이 흡수하게 한다 (fitWidth 와 함께 동작)
+  if (col.fill) column.sgFill = true;
   if (col.visible !== undefined) column.visible = col.visible;
   // 2단 헤더용 그룹 이름은 여기서 컬럼에 달아두고, groupIntoBands()가 중첩 구조로 바꾼다.
   // (DevExtreme 의 ownerBand 는 문자열이 아니라 "밴드 컬럼의 배열 인덱스"라서 직접 쓰지 않는다)
@@ -297,6 +300,7 @@ const toDxColumn = (col, defaults = {}) => {
   if (type === 'button' || type === 'image' || type === 'file' || type === 'link' || type === 'checkbox') {
     column.cellTemplate = `sgCell-${type}`;
     column.sgCellType = type;
+    column.sgRichCell = true;
     column.sgCellOptions = {
       buttonText: col.buttonText,
       buttonClass: col.buttonClass,
@@ -329,9 +333,19 @@ const toDxColumn = (col, defaults = {}) => {
   const headerAlign = isAlign(col.headerAlign) ? col.headerAlign : isAlign(defaults.headerAlign) ? defaults.headerAlign : 'center';
   internalClasses.push(HEADER_ALIGN_CLASS[headerAlign]);
 
-  // 말줄임
-  const useEllipsis = col.ellipsis ?? defaults.ellipsis ?? true;
-  if (!useEllipsis) internalClasses.push('dxg-no-ellipsis');
+  /*
+   * 말줄임
+   *
+   * 리치 셀(버튼/체크박스/이미지/첨부/링크)은 텍스트가 아니라 UI 요소라서 말줄임 대상이 아니다.
+   * 텍스트용 말줄임 규칙을 그대로 두면 버튼 옆에 의미 없는 "..." 이 붙는다.
+   * (실제로 폭 70px 컬럼에서 테마 패딩 좌우 21px 때문에 45px 버튼이 넘쳐 "수정 ..." 으로 보였다)
+   */
+  if (column.sgRichCell) {
+    internalClasses.push('dxg-cell--rich');
+  } else {
+    const useEllipsis = col.ellipsis ?? defaults.ellipsis ?? true;
+    if (!useEllipsis) internalClasses.push('dxg-no-ellipsis');
+  }
 
   /*
    * ----- 사용자 정의 우선 적용 (탈출구) -----
@@ -448,7 +462,83 @@ export const buildColumns = (columns, { warn = true, headerAlign = 'center', ell
     .filter((col) => col && col.constructor === Object && (col.field || col.name))
     .map((col) => toDxColumn(col, { headerAlign, ellipsis }));
 
+  /*
+   * 가로 폭 채우기(applyFillColumn)는 여기서 하지 않는다.
+   * 행번호 컬럼은 래퍼가 따로 만들어 앞에 붙이므로, 그 컬럼까지 포함한 최종 목록에서 계산해야
+   * 폭 비율이 맞는다. (여기서 100% 를 채워 두면 행번호 폭이 더해져 가로 스크롤이 생긴다)
+   */
   return groupIntoBands(mapped);
+};
+
+/**
+ * 표를 컨테이너 가로 폭에 채운다 (fitWidth)
+ *
+ * ----- 왜 필요한가 -----
+ * DevExtreme 은 grid_core/views/m_grid_view.js 에서
+ *   "모든 컬럼에 width 가 있고(!hasAutoWidth) 폭 합계가 컨테이너보다 좁으면"
+ * 그리드 루트에 인라인 max-width(= 컬럼 폭 합계) 를 박아 표를 그만큼으로 고정한다.
+ * 그래서 카드 폭이 1026px 이어도 표가 컬럼 합계인 982px 로 남고 오른쪽에 빈 공간이 생긴다.
+ * 인라인 스타일이라 CSS 의 width:100% 로는 덮을 수 없다(max-width 가 이긴다).
+ *
+ * 같은 조건문에 `&& !hasPercentWidth` 가 붙어 있어서, 폭을 % 로 주면 제한이 걸리지 않는다.
+ *
+ * ----- 두 가지 방식 -----
+ * 1. 비율 유지 (기본)
+ *    지정한 px 폭을 그대로 비율로 바꿔(px -> %) 전체가 함께 늘어난다.
+ *    컬럼 간 폭 차이가 유지되고 어느 한 컬럼만 기형적으로 넓어지지 않는다.
+ *
+ * 2. 특정 컬럼이 흡수 (컬럼에 fill: true)
+ *    그 컬럼의 width 만 비우면 남는 공간을 전부 가져간다.
+ *    긴 텍스트 컬럼 하나만 늘리고 싶을 때 쓴다.
+ *
+ * 처음에는 2번을 기본으로 삼아 "가장 넓은 컬럼"을 자동 선택했는데,
+ * 폭이 비슷한 컬럼들만 있는 화면에서 급여 컬럼이 150px -> 394px 로 부풀어 보기 나빴다.
+ * 그래서 기본을 1번으로 바꿨다.
+ *
+ * 어느 방식이든 지정했던 px 는 minWidth 로 남겨 원래보다 좁아지지 않게 한다
+ * (좁은 화면에서는 minWidth 까지 줄어든 뒤 가로 스크롤이 생긴다).
+ *
+ * @param {Array} dxColumns buildColumns 결과 (밴드 구조 가능)
+ * @returns {Array} 같은 배열 (안쪽 컬럼 객체를 직접 수정)
+ */
+export const applyFillColumn = (dxColumns) => {
+  if (!Array.isArray(dxColumns) || dxColumns.length === 0) return dxColumns;
+
+  // 밴드(2단 헤더)의 부모 컬럼은 폭을 갖지 않으므로 실제 데이터 컬럼만 다룬다.
+  // flattenColumns 는 같은 객체를 돌려주므로 여기서 수정하면 밴드 구조에도 반영된다.
+  const leaves = flattenColumns(dxColumns);
+  if (leaves.length === 0) return dxColumns;
+
+  // 폭이 없는 컬럼이 이미 있으면 DevExtreme 이 알아서 그 컬럼을 늘린다
+  if (leaves.some((col) => col.width === undefined)) return dxColumns;
+
+  const keepMinWidth = (col, width) => {
+    if (col.minWidth === undefined && Number.isFinite(width)) col.minWidth = width;
+  };
+
+  // ----- 방식 2 : fill 을 지정한 컬럼이 남는 공간을 흡수 -----
+  const target = leaves.find((col) => col.sgFill);
+  if (target) {
+    keepMinWidth(target, Number(target.width));
+    delete target.width;
+    return dxColumns;
+  }
+
+  // ----- 방식 1 : 비율 유지 (px -> %) -----
+  const widths = leaves.map((col) => Number(col.width));
+
+  // px 가 아닌 폭('20%', 'auto' 등)이 섞여 있으면 사용자 의도를 알 수 없으니 손대지 않는다
+  if (!widths.every((width) => Number.isFinite(width) && width > 0)) return dxColumns;
+
+  const total = widths.reduce((sum, width) => sum + width, 0);
+
+  leaves.forEach((col, index) => {
+    keepMinWidth(col, widths[index]);
+    // 소수점을 넉넉히 남겨 합이 100% 에서 어긋나지 않게 한다
+    col.width = `${((widths[index] / total) * 100).toFixed(4)}%`;
+  });
+
+  return dxColumns;
 };
 
 /**

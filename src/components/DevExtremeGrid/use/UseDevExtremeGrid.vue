@@ -298,10 +298,20 @@ const doClearGroup = () => {
   groupMsg.value = "그룹을 해제했습니다.";
 };
 
-// 페이지네이션 3종
+// 페이지네이션 3종 + 구성요소 켜고 끄기
 const pagingRows = ref(makeRows(137));
 const pagingAlign = ref("center");
 const PAGING_ALIGNS = ["left", "center", "right"];
+
+/* 페이저를 구성하는 요소를 하나씩 켜고 끌 수 있습니다 */
+const pagingShowPageSize = ref(true);
+const pagingShowInfo = ref(true);
+const pagingShowPages = ref(true);
+const pagingShowNav = ref(true);
+const pagingPageSizeMode = ref("input");
+const pagingMsg = ref("");
+
+const onPageSizeChange = ({ pageSize }) => (pagingMsg.value = `페이지당 ${pageSize}건으로 변경`);
 
 // 대용량
 const bigRows = ref([]);
@@ -424,7 +434,28 @@ const columns = [
      - 정렬  : cssClass 가 아니라 column.alignment
      - 포맷  : DevExtreme 내장 format (날짜) / customizeText (단위·축약)
      - 코드  : column.lookup { dataSource, valueExpr, displayExpr }
-     - 검증  : column.validationRules 배열 */`;
+     - 검증  : column.validationRules 배열 */
+
+<!-- ================= 가로 폭 ================= -->
+<!-- 기본값(fit-width)으로 표가 컨테이너를 꽉 채웁니다 -->
+<DevExtremeGrid v-model="rows" :columns="columns" />
+
+<!-- 남는 공간을 특정 컬럼이 가져가게 하려면 fill -->
+const columns = [
+  { field: 'empNo', header: '사번', width: 110 },
+  { field: 'memo' , header: '비고', width: 200, fill: true },  // 이 컬럼이 늘어남
+  { field: 'useYn', header: '사용', width: 80  },
+];
+
+<!-- 컬럼을 내용 크기에 맞추고 싶으면 (표가 컨테이너보다 좁게 남을 수 있음) -->
+<DevExtremeGrid v-model="rows" :columns="columns" :fit-width="false" />
+
+/* fill 을 지정하지 않으면 리치 셀(버튼/체크박스/이미지/첨부)을 뺀 가장 넓은 컬럼이 늘어납니다.
+   지정했던 width 는 minWidth 로 남아 원래보다 좁아지지 않습니다.
+
+   [구현 메모] DevExtreme 은 "모든 컬럼에 width 가 있고 합계가 컨테이너보다 좁으면"
+   그리드 루트에 인라인 max-width 를 박아 표를 컬럼 합계로 고정합니다.
+   인라인이라 CSS width:100% 로는 못 덮습니다. 그래서 폭을 비워 둘 컬럼을 하나 만듭니다. */`;
 
 const searchCode = `<!-- (1) 그리드 내부 필터 : filterable + searchable -->
 <DevExtremeGrid v-model="rows" :columns="columns" filterable searchable />
@@ -603,9 +634,35 @@ g.value.groupBy('deptCd');              // 코드로도 가능
 g.value.groupBy(['deptCd', 'gradeCd']); // 2단 그룹
 g.value.clearGrouping();
 
-<!-- 페이지네이션 (좌/중앙/우) -->
-<DevExtremeGrid pageable :page-size="20" pagination-align="center" />
-// DevExtreme 에는 pager 정렬 옵션이 없어 CSS 로 처리합니다.
+<!-- 페이지네이션 : 기본값만으로 아래 구성이 모두 켜집니다 -->
+<DevExtremeGrid v-model="rows" :columns="columns" pageable :page-size="20" />
+
+<!-- 전체 옵션 -->
+<DevExtremeGrid
+  pageable
+  :page-size="20"
+  :page-sizes="[20, 50, 100, 500]"   <!-- 건수 입력창의 추천 목록 -->
+  pagination-align="center"           <!-- left | center | right (기본 right) -->
+  pagination-page-size-mode="input"   <!-- input(기본) | buttons -->
+  pagination-page-size-label="페이지당"
+  :pagination-page-size-min="1"
+  :pagination-page-size-max="1000"
+  :pagination-show-page-size="true"   <!-- 페이지당 건수 -->
+  :pagination-show-info="true"        <!-- "7페이지 중 1페이지 (137개 항목)" -->
+  :pagination-show-pages="true"       <!-- 페이지 번호 1 2 3 … -->
+  :pagination-show-navigation="true"  <!-- 이전/다음 이동 버튼 -->
+  @on-page-size-change="({ pageSize }) => ..."
+/>
+
+/* pagination-page-size-mode
+     input   : 목록에서 고르거나 숫자를 직접 입력하는 입력창 (목록에 없는 35 같은 값도 가능)
+               범위를 벗어나면 min/max 로 잘라서 되돌려 줍니다. 건수가 바뀌면 1페이지로 갑니다.
+     buttons : DevExtreme 기본 방식인 [20][50][100][500] 버튼
+
+   [구현 메모]
+   - 정렬과 "페이지 번호 숨기기"는 DevExtreme 에 옵션이 없어 CSS 로 처리합니다.
+   - 건수 입력창은 DevExtreme 페이저 밖(래퍼 소유)에 두고 페이저 행에 겹칩니다.
+     페이저 안에 넣으면 페이지를 이동할 때 페이저가 다시 그려지면서 지워집니다. */
 
 <!-- 대용량 : pageable 을 끄면 가상 스크롤로 동작합니다 -->
 <DevExtremeGrid v-model="rows" :columns="columns" :height="360" />
@@ -890,23 +947,48 @@ g.value.isTrial();`;
         </div>
         <DevExtremeGrid ref="groupGrid" v-model="groupRows" :columns="filterColumns" :height="380" groupable />
 
-        <h3 class="mb-1 mt-6">3) 페이지네이션 3종</h3>
-        <p class="text-caption mb-2">총 {{ pagingRows.length }}건. DevExtreme 에는 pager 정렬 옵션이 없어 CSS 로 처리합니다.</p>
-        <div class="mb-2">
+        <h3 class="mb-1 mt-6">3) 페이지네이션 — 정렬 3종 + 구성요소 켜고 끄기</h3>
+        <p class="text-caption mb-2">
+          총 {{ pagingRows.length }}건. <strong>페이지당 건수</strong>는 목록에서 고르거나 숫자를 직접 입력할 수 있습니다(예: 35). 정보 표시·페이지 번호·이동
+          버튼도 각각 끌 수 있습니다.
+        </p>
+        <div class="mb-1">
+          <span class="text-caption mr-2">정렬</span>
           <Button v-for="a in PAGING_ALIGNS" :key="a" :type="pagingAlign === a ? 'confirm' : 'normal'" class="mr-2" @click="pagingAlign = a">
             {{ a }}
           </Button>
         </div>
+        <div class="mb-1">
+          <span class="text-caption mr-2">건수 선택 방식</span>
+          <Button :type="pagingPageSizeMode === 'input' ? 'confirm' : 'normal'" class="mr-2" @click="pagingPageSizeMode = 'input'">입력창</Button>
+          <Button :type="pagingPageSizeMode === 'buttons' ? 'confirm' : 'normal'" class="mr-2" @click="pagingPageSizeMode = 'buttons'">
+            버튼(DevExtreme 기본)
+          </Button>
+        </div>
+        <div class="mb-2">
+          <span class="text-caption mr-2">표시</span>
+          <Button :type="pagingShowPageSize ? 'confirm' : 'normal'" class="mr-2" @click="pagingShowPageSize = !pagingShowPageSize">페이지당 건수</Button>
+          <Button :type="pagingShowInfo ? 'confirm' : 'normal'" class="mr-2" @click="pagingShowInfo = !pagingShowInfo">건수 정보</Button>
+          <Button :type="pagingShowPages ? 'confirm' : 'normal'" class="mr-2" @click="pagingShowPages = !pagingShowPages">페이지 번호</Button>
+          <Button :type="pagingShowNav ? 'confirm' : 'normal'" class="mr-2" @click="pagingShowNav = !pagingShowNav">이동 버튼</Button>
+          <span v-if="pagingMsg" class="text-caption ml-3">{{ pagingMsg }}</span>
+        </div>
         <DevExtremeGrid
+          :key="`${pagingAlign}-${pagingPageSizeMode}-${pagingShowPageSize}-${pagingShowInfo}-${pagingShowNav}`"
           v-model="pagingRows"
           :columns="filterColumns"
           :height="340"
-          :key="pagingAlign"
           row-number
           pageable
           :page-size="20"
           :pagination-align="pagingAlign"
+          :pagination-page-size-mode="pagingPageSizeMode"
+          :pagination-show-page-size="pagingShowPageSize"
+          :pagination-show-info="pagingShowInfo"
+          :pagination-show-pages="pagingShowPages"
+          :pagination-show-navigation="pagingShowNav"
           filterable
+          @on-page-size-change="onPageSizeChange"
         />
 
         <h3 class="mb-1 mt-6">4) 대용량 (가상 스크롤)</h3>
