@@ -471,6 +471,46 @@ export const buildColumns = (columns, { warn = true, headerAlign = 'center', ell
 };
 
 /**
+ * 행번호 오프셋 — "지금 그려진 첫 행 앞에 몇 개가 있는지"
+ *
+ * cellTemplate 의 rowIndex 는 그려진 행들 안에서의 순번이라, 이 값을 더해야 번호가 이어진다.
+ *
+ * ----- 페이징 모드 -----
+ * pageIndex() * pageSize() 로 계산한다. 둘 다 공개 메서드다
+ * (grid_core/data_controller/m_data_controller.js 의 publicMethods()).
+ *
+ * ----- 가상 스크롤 모드 -----
+ * 공개 API 로는 창의 시작 위치를 알 수 없다. 실제로 60행 그리드에서 37번째 행이 맨 위일 때 확인한 값:
+ *   pageIndex()*pageSize()            = 20   (여러 페이지를 한 뷰포트에 걸쳐 읽으므로 어긋난다)
+ *   getVisibleRows()[0].rowIndex      = 0    (창 기준)
+ *   getRowIndexByKey(key)             = 4    (창 기준)
+ *   getDataSource().lastLoadOptions() = null (로컬 배열에서는 채워지지 않는다)
+ *   rowRenderingMode: 'standard' 로 바꿔도 여전히 창 단위로 그린다 (오프셋 35 vs 20)
+ *   데이터 컨트롤러의 getRowIndexOffset() = 36  <- DevExtreme 자신이 쓰는 값
+ *
+ * 그래서 가상 스크롤에서만 이 내부 getter 를 읽는다. 읽기 전용이고 옵셔널 체이닝으로 감싸므로,
+ * 다음 버전에서 없어지면 오프셋 0 이 되어 "스크롤하면 번호가 1 부터 다시" 로 돌아갈 뿐 깨지지 않는다.
+ *
+ * @param {Object} grid DevExtreme DataGrid 인스턴스 (cell.component)
+ * @returns {number} 앞쪽 행 개수
+ */
+export const rowNumberOffset = (grid) => {
+  if (!grid) return 0;
+
+  const scrollingMode = grid.option?.('scrolling.mode');
+
+  if (scrollingMode === 'virtual' || scrollingMode === 'infinite') {
+    const offset = grid.getController?.('data')?.getRowIndexOffset?.();
+    return Number.isFinite(offset) ? offset : 0;
+  }
+
+  const pageIndex = grid.pageIndex?.() ?? 0;
+  const pageSize = grid.pageSize?.() ?? 0;
+
+  return Number.isFinite(pageIndex) && Number.isFinite(pageSize) ? pageIndex * pageSize : 0;
+};
+
+/**
  * 표를 컨테이너 가로 폭에 채운다 (fitWidth)
  *
  * ----- 왜 필요한가 -----

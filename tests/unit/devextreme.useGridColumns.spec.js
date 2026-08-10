@@ -7,6 +7,7 @@ import {
   groupIntoBands,
   flattenColumns,
   applyFillColumn,
+  rowNumberOffset,
   formatNumberText,
   safeUrl,
   SUPPORTED_COLUMN_TYPES,
@@ -325,6 +326,53 @@ describe('applyFillColumn - 가로 폭 채우기', () => {
 
     expect(col.fill).toBeUndefined();
     expect(col.sgFill).toBe(true);
+  });
+});
+
+/* ---------------------------------------------------------------------------------------------------------------
+행번호 오프셋
+
+cellTemplate 의 rowIndex 는 "그려진 행들 안에서의 순번"이라 그것만 쓰면
+페이지를 넘길 때도, 가상 스크롤로 내려갈 때도 1 부터 다시 시작한다.
+--------------------------------------------------------------------------------------------------------------- */
+describe('rowNumberOffset - 행번호 오프셋', () => {
+  /** DevExtreme 위젯 흉내 */
+  const fakeGrid = ({ mode, pageIndex = 0, pageSize = 0, internalOffset } = {}) => ({
+    option: (name) => (name === 'scrolling.mode' ? mode : undefined),
+    pageIndex: () => pageIndex,
+    pageSize: () => pageSize,
+    getController: (name) => (name === 'data' && internalOffset !== undefined ? { getRowIndexOffset: () => internalOffset } : undefined),
+  });
+
+  it('페이징 모드에서는 pageIndex * pageSize 를 쓴다', () => {
+    expect(rowNumberOffset(fakeGrid({ pageIndex: 2, pageSize: 20 }))).toBe(40);
+  });
+
+  it('1페이지에서는 오프셋이 0 이다', () => {
+    expect(rowNumberOffset(fakeGrid({ pageIndex: 0, pageSize: 20 }))).toBe(0);
+  });
+
+  /*
+   * 가상 스크롤에서는 pageIndex*pageSize 가 맞지 않는다.
+   * 실측: 37번째 행이 맨 위일 때 pageIndex*pageSize = 20 인데 실제 시작 위치는 36 이었다
+   * (여러 페이지를 한 뷰포트에 걸쳐 읽기 때문). DevExtreme 자신이 쓰는 값만 정확하다.
+   */
+  it('가상 스크롤에서는 데이터 컨트롤러의 오프셋을 쓴다', () => {
+    expect(rowNumberOffset(fakeGrid({ mode: 'virtual', pageIndex: 1, pageSize: 20, internalOffset: 36 }))).toBe(36);
+  });
+
+  it('무한 스크롤도 같은 경로를 쓴다', () => {
+    expect(rowNumberOffset(fakeGrid({ mode: 'infinite', internalOffset: 100 }))).toBe(100);
+  });
+
+  it('내부 오프셋을 못 구하면 0 으로 떨어진다 (틀린 번호보다 예전 동작이 낫다)', () => {
+    expect(rowNumberOffset(fakeGrid({ mode: 'virtual', pageIndex: 1, pageSize: 20 }))).toBe(0);
+  });
+
+  it('그리드가 없거나 메서드가 없어도 0 을 돌려준다', () => {
+    expect(rowNumberOffset(null)).toBe(0);
+    expect(rowNumberOffset(undefined)).toBe(0);
+    expect(rowNumberOffset({})).toBe(0);
   });
 });
 

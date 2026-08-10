@@ -2,7 +2,7 @@
 import { ref, computed, watch, useAttrs } from "vue";
 import { DxDataGrid } from "devextreme-vue/data-grid";
 
-import { buildColumns, buildSummaryItems, applyFillColumn, safeUrl } from "./composables/useGridColumns";
+import { buildColumns, buildSummaryItems, applyFillColumn, rowNumberOffset, safeUrl } from "./composables/useGridColumns";
 import { buildGridOptions, applyKoreanLocale, applyLicense, hasLicense } from "./composables/useGridOptions";
 
 /* ***************************************************************************************************************
@@ -222,7 +222,16 @@ const widget = () => gridRef.value?.instance;
 --------------------------------------------------------------------------------------------------------------- */
 const dxColumns = ref([]);
 
-/** 행번호 컬럼 — 정렬/필터를 걸어도 화면 순서대로 1부터 다시 매겨진다 */
+/**
+ * 행번호 — 페이지를 넘겨도, 스크롤해도 번호가 이어진다
+ *
+ * cell.rowIndex 는 "지금 그려진 행들 안에서의 순번"이라 그것만 쓰면
+ * 2페이지로 넘어갈 때도, 가상 스크롤로 내려갈 때도 1 부터 다시 시작한다.
+ * 앞쪽에 몇 개가 있었는지(offset)를 더해야 이어진다.
+ */
+const rowNumberOf = (cell) => rowNumberOffset(cell?.component) + (cell?.rowIndex ?? 0) + 1;
+
+/** 행번호 컬럼 — 정렬/필터를 걸면 화면 순서대로 다시 매겨지고, 페이지·스크롤에는 이어진다 */
 const createRowNumberColumn = () => ({
   caption: props.rowNumberHeader,
   width: props.rowNumberWidth,
@@ -237,7 +246,6 @@ const createRowNumberColumn = () => ({
   allowEditing: false,
   allowReordering: false,
   allowHiding: false,
-  // rowIndex 는 화면에 보이는 순번이라 정렬/필터 후에도 1부터 다시 매겨진다
   cellTemplate: "sgCell-rowNumber",
   sgCellType: "rowNumber",
 });
@@ -731,9 +739,9 @@ const passthroughAttrs = computed(() => {
     >
       <!-- ===== 리치 셀 템플릿 ===== -->
 
-      <!-- 행번호 : rowIndex 는 화면 순번이라 정렬/필터 후에도 1부터 다시 매겨진다 -->
+      <!-- 행번호 : 페이지를 넘겨도, 스크롤해도 번호가 이어진다 (rowNumberOf 주석 참고) -->
       <template #sgCell-rowNumber="{ data: cell }">
-        {{ cell.rowIndex + 1 }}
+        {{ rowNumberOf(cell) }}
       </template>
 
       <!-- 버튼 -->

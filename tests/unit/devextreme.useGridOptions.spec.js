@@ -183,18 +183,27 @@ describe('buildGridOptions - 페이지네이션 / 가상 스크롤', () => {
     expect(options.pager.visible).toBe(true);
   });
 
-  it('페이징을 끄고 높이를 고정하면 가상 스크롤로 대용량을 처리한다', () => {
+  it('pageable 을 끄고 높이를 고정하면 가상 스크롤로 대용량을 처리한다', () => {
     const options = buildGridOptions({ pageable: false, height: 380 });
 
-    expect(options.paging).toEqual({ enabled: false });
     expect(options.scrolling).toEqual({ mode: 'virtual', rowRenderingMode: 'virtual' });
+    expect(options.pager).toEqual({ visible: false });
   });
 
-  it('높이가 auto면 가상 스크롤을 켜지 않는다 (기준 영역이 없어 동작하지 않고 W1025 경고만 남는다)', () => {
+  /*
+   * 가상 스크롤은 내부적으로 페이징으로 데이터를 나눠 읽는다.
+   * paging.enabled: false 를 주면 그 기준이 사라져 행번호 오프셋을 구할 수 없게 되고
+   * 스크롤할 때 번호가 1 부터 다시 시작한다. 그래서 페이저만 숨기고 페이징은 켜 둔다.
+   */
+  it('가상 스크롤에서는 paging 을 끄지 않는다 (행번호 오프셋의 기준이 사라진다)', () => {
+    expect(buildGridOptions({ pageable: false, height: 380 }).paging).toBeUndefined();
+  });
+
+  it('높이가 auto면 가상 스크롤을 켜지 않고 전체를 한 번에 그린다', () => {
     const options = buildGridOptions({ pageable: false, height: 'auto' });
 
-    expect(options.paging).toEqual({ enabled: false });
     expect(options.scrolling).toBeUndefined();
+    expect(options.paging).toEqual({ enabled: false });
   });
 
   it('페이징을 켜면 높이가 있어도 가상 스크롤을 켜지 않는다', () => {

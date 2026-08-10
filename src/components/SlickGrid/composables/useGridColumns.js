@@ -517,10 +517,29 @@ export const calcSummary = (items, column) => {
 export const ROW_NUMBER_COLUMN_ID = '__sgRowNum';
 
 /**
+ * getOffset 호출을 감싼다 — 오프셋을 못 구해도 번호는 그려져야 한다
+ *
+ * @param {Function} [getOffset]
+ * @returns {number} 0 이상의 정수
+ */
+const rowNumberOffsetOf = (getOffset) => {
+  if (typeof getOffset !== 'function') return 0;
+
+  const offset = getOffset();
+  return Number.isFinite(offset) && offset > 0 ? Math.floor(offset) : 0;
+};
+
+/**
  * 행번호(No) 컬럼 생성
  *
- * 포맷터의 첫번째 인자 row는 "화면에 보이는 순번"이라서
- * 정렬/필터를 걸어도 항상 1부터 순서대로 다시 매겨진다 (원하는 동작).
+ * 포맷터의 첫번째 인자 row는 "현재 페이지 안에서의 순번"이다.
+ * 정렬/필터를 걸면 화면에 보이는 순서대로 다시 매겨지고(원하는 동작),
+ * 페이지를 넘기면 다시 0부터 시작하므로 앞 페이지의 건수를 더해야 번호가 이어진다.
+ *
+ * 그 값은 그리드 래퍼가 getOffset으로 넘겨준다 (paginationService.dataFrom - 1).
+ * 여기서 dataView.getPagingInfo()를 직접 읽지 않는 이유:
+ *   서버 페이징일 때는 PaginationService가 dataView.setPagingOptions()를 호출하지 않아
+ *   getPagingInfo()의 pageNum/pageSize가 0으로 남는다. dataFrom은 두 방식 모두에서 갱신된다.
  *
  * 체크박스 선택 컬럼은 slickgrid-universal이 자동으로 맨 앞에 붙이므로
  * 최종 컬럼 순서는 [체크박스][No][데이터...] 가 된다.
@@ -528,16 +547,17 @@ export const ROW_NUMBER_COLUMN_ID = '__sgRowNum';
  * @param {Object} [options]
  * @param {string} [options.header='No'] 헤더 표시명
  * @param {number} [options.width=60] 컬럼 너비
+ * @param {Function} [options.getOffset] 현재 페이지 앞의 건수를 돌려주는 함수
  * @returns {Object} SlickGrid Column
  */
-export const createRowNumberColumn = ({ header = 'No', width = 60 } = {}) => ({
+export const createRowNumberColumn = ({ header = 'No', width = 60, getOffset } = {}) => ({
   id: ROW_NUMBER_COLUMN_ID,
   field: ROW_NUMBER_COLUMN_ID,
   name: header,
   width,
   minWidth: 40,
   maxWidth: 100,
-  formatter: (row) => `${row + 1}`,
+  formatter: (row) => `${rowNumberOffsetOf(getOffset) + row + 1}`,
   cssClass: ALIGN_CLASS.center,
   headerCssClass: HEADER_ALIGN_CLASS.center,
   // 행번호는 정렬/필터/그룹 대상이 아니다

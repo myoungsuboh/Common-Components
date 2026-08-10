@@ -101,7 +101,7 @@ const styleGuide = `스타일 커스터마이징
 const apiGuide = `주요 Props
   columns*        컬럼 정의 (축약/원본 혼용)      options        원본 GridOption 통과 (2층)
   v-model         데이터 배열                     id-field       행 고유키 필드명 (기본 'id')
-  row-number      No 컬럼                        fit-columns    폭 꽉 채움
+  row-number      No 컬럼 (페이지 넘어가도 연속)  fit-columns    폭 꽉 채움
   filterable      필터 행                        external-filter 필터 행 숨기고 외부 조회만
   editable        인라인 편집                    auto-edit      클릭 즉시 편집
   selectable      행 선택                        multi-select   다중 선택 (기본 true)
@@ -946,7 +946,7 @@ const selectedCount = computed(() => filterRows.value.length);
 const filterCode = `<SlickGrid
   v-model="rows"
   :columns="columns"
-  row-number          <!-- 맨 앞 No 컬럼 (정렬/필터해도 1부터 다시 매김) -->
+  row-number          <!-- 맨 앞 No 컬럼 (페이지를 넘겨도 번호가 이어짐) -->
   filterable          <!-- 컬럼별 필터 행 -->
   selectable          <!-- 행 선택 -->
   checkbox-selector   <!-- 좌측 체크박스 + 좌측 상단 전체선택 -->

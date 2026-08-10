@@ -415,7 +415,9 @@ VITE_DEVEXTREME_LICENSE_KEY=여기에_런타임_키
 #   v26.1 키는 v26.1 이하에서 유효하고, 상위 버전 키는 하위에도 쓸 수 있습니다.
 # - 30일이 지나도 기능이 차단되지는 않지만, 라이선스 없이 운영에 쓰는 것은 위반입니다.`;
 
-const basicCode = `<DevExtremeGrid v-model="rows" :columns="columns" :height="360" row-number />
+const basicCode = `<!-- row-number : 맨 앞 No 컬럼. 페이지를 넘겨도, 가상 스크롤로 내려가도 번호가 이어집니다.
+     (정렬·필터를 걸면 화면에 보이는 순서대로 다시 매겨집니다) -->
+<DevExtremeGrid v-model="rows" :columns="columns" :height="360" row-number />
 
 const columns = [
   { field: 'empNo' , header: '사번'  , type: 'text' },

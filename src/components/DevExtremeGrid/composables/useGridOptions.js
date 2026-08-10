@@ -200,19 +200,30 @@ const featuresToOptions = (features) => {
       // (DevExtreme 에 정렬 옵션이 없고, 번호만 끄는 옵션도 없다)
     };
   } else {
-    options.paging = { enabled: false };
+    // 페이저는 감추지만 페이징 자체는 끄지 않는다 (아래 이유 참고)
+    options.pager = { visible: false };
 
     /*
-     * 페이징을 끄면 가상 스크롤로 대용량을 처리한다.
+     * 페이징을 끄면(=pageable false) 가상 스크롤로 대용량을 처리한다.
      *
      * 단, 높이를 고정하지 않으면 켜지 않는다.
      * 가상 스크롤은 "보이는 영역"을 기준으로 렌더할 행을 고르는데
      * 높이가 auto 면 기준이 되는 영역 자체가 없어서 동작하지 않고,
      * DevExtreme 도 W1025 경고를 띄운다.
      * (높이 없이 켜두면 경고만 쌓이고 이득이 없다)
+     *
+     * *** paging.enabled: false 를 주지 않는 이유 ***
+     * DevExtreme 의 가상 스크롤은 내부적으로 페이징으로 데이터를 나눠 읽는다
+     * (virtual_scrolling/m_virtual_scrolling.js 의 isVirtualPaging / getRowIndexOffset 참고).
+     * paging 을 끄면 그 기준이 사라져서 행번호 계산에 쓰는 pageIndex()/pageSize() 가 0 이 되고,
+     * cellTemplate 의 rowIndex 가 "렌더된 창" 기준이 되어 스크롤하면 1 부터 다시 시작한다.
+     * (실제로 37번째 행까지 스크롤했을 때 No 가 1,2,3,4,5 로 다시 매겨지는 것을 확인했다)
      */
     if (height !== null) {
       options.scrolling = { mode: 'virtual', rowRenderingMode: 'virtual' };
+    } else {
+      // 가상 스크롤을 못 쓰는 경우에는 전체를 한 번에 그린다
+      options.paging = { enabled: false };
     }
   }
 

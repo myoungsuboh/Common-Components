@@ -372,6 +372,27 @@ const applyServerTotalCount = async () => {
   instance.value?.paginationService?.updateTotalItems?.(total, false);
 };
 
+/**
+ * 행번호 오프셋 — 현재 페이지 앞에 몇 건이 있는지
+ *
+ * 포맷터의 row 인자는 현재 페이지 안에서의 순번이라, 이 값을 더해야 페이지를 넘겨도 번호가 이어진다.
+ *
+ * paginationService.dataFrom 은 "현재 페이지의 첫 항목 번호(1부터)" 다.
+ *   dataFrom = (pageNumber - 1) * itemsPerPage + 1
+ * PaginationService.recalculateFromToIndexes() 가 로컬 페이징과 서버 페이징 모두에서
+ * 페이지가 바뀔 때 갱신하고, 그 뒤에 그리드가 다시 그려지므로 포맷터가 읽는 시점에는 최신값이다.
+ *
+ * dataView.getPagingInfo() 를 쓰지 않는 이유:
+ *   서버 페이징에서는 PaginationService 가 dataView.setPagingOptions() 를 호출하지 않아
+ *   pageNum/pageSize 가 0 으로 남는다 (pagination.service.js processOnPageChanged 의 분기).
+ *
+ * 페이지네이션을 쓰지 않으면 dataFrom 이 1 이라 오프셋 0 이 된다.
+ */
+const rowNumberOffset = () => {
+  const dataFrom = instance.value?.paginationService?.dataFrom;
+  return Number.isFinite(dataFrom) && dataFrom > 1 ? dataFrom - 1 : 0;
+};
+
 const backendServiceApi = props.fetchData
   ? createBackendServiceApi({
       fetchData: props.fetchData,
@@ -423,7 +444,7 @@ watch(
     // 체크박스 선택 컬럼은 slickgrid-universal이 자동으로 그보다 더 앞에 넣으므로
     // 최종 순서는 [체크박스][No][데이터...] 가 된다.
     slickColumns.value = props.rowNumber
-      ? [createRowNumberColumn({ header: props.rowNumberHeader, width: props.rowNumberWidth }), ...built]
+      ? [createRowNumberColumn({ header: props.rowNumberHeader, width: props.rowNumberWidth, getOffset: rowNumberOffset }), ...built]
       : built;
 
     /*

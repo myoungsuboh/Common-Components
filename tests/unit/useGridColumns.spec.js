@@ -363,6 +363,37 @@ describe('행번호 컬럼', () => {
     expect(col.formatter(4)).toBe('5');
   });
 
+  /*
+   * 페이지를 넘겨도 번호가 이어져야 한다.
+   * 포맷터의 row 인자는 현재 페이지 안의 순번이라 앞 페이지 건수를 더해야 한다.
+   * 그 값은 래퍼가 paginationService.dataFrom - 1 로 넘겨준다.
+   */
+  it('getOffset을 주면 페이지를 넘겨도 번호가 이어진다', () => {
+    // 20건씩 3페이지 -> 3페이지의 첫 행은 41
+    const col = createRowNumberColumn({ getOffset: () => 40 });
+
+    expect(col.formatter(0)).toBe('41');
+    expect(col.formatter(19)).toBe('60');
+  });
+
+  it('getOffset이 없으면 예전처럼 1부터 매긴다', () => {
+    expect(createRowNumberColumn().formatter(0)).toBe('1');
+  });
+
+  it('getOffset이 이상한 값을 돌려줘도 번호는 그려진다', () => {
+    for (const bad of [undefined, null, NaN, -5, 'abc']) {
+      expect(createRowNumberColumn({ getOffset: () => bad }).formatter(0)).toBe('1');
+    }
+  });
+
+  it('getOffset이 소수를 돌려주면 내림한다', () => {
+    expect(createRowNumberColumn({ getOffset: () => 20.7 }).formatter(0)).toBe('21');
+  });
+
+  it('엑셀로 내보낼 때도 화면과 같은 번호가 나가도록 포맷터를 쓴다', () => {
+    expect(createRowNumberColumn().exportWithFormatter).toBe(true);
+  });
+
   it('정렬 불가 + 컬럼 선택기에서 숨길 수 없다', () => {
     const col = createRowNumberColumn();
 
