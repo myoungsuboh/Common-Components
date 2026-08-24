@@ -170,6 +170,26 @@ describe('기능 플래그', () => {
   it('행 고유 키를 지정할 수 있다', () => {
     expect(buildGridOptions({ idField: 'empNo' }).datasetIdPropertyName).toBe('empNo');
   });
+
+  /*
+   * 컬럼 픽커는 라이브러리 기본값이 true라서 헤더 우클릭 시 컬럼 표시/숨김 팝업이 떴다.
+   * 우클릭은 헤더 메뉴(∨와 동일)로 대체했으므로 어떤 조합에서도 픽커가 다시 켜지면 안 된다.
+   */
+  it('헤더 우클릭 컬럼 픽커는 항상 꺼져 있다 (gridMenu를 켜도)', () => {
+    expect(buildGridOptions().enableColumnPicker).toBe(false);
+    expect(buildGridOptions({ gridMenu: true }).enableColumnPicker).toBe(false);
+  });
+
+  it('gridMenu는 그리드 메뉴(☰)와 헤더 메뉴(∨)만 켠다', () => {
+    const options = buildGridOptions({ gridMenu: true });
+
+    expect(options.enableGridMenu).toBe(true);
+    expect(options.enableHeaderMenu).toBe(true);
+  });
+
+  it('사용자 options로는 컬럼 픽커를 다시 켤 수 있다 (2층 탈출구)', () => {
+    expect(buildGridOptions({}, { enableColumnPicker: true }).enableColumnPicker).toBe(true);
+  });
 });
 
 describe('엑셀 내보내기 (한글 안전)', () => {

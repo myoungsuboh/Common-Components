@@ -164,6 +164,17 @@ const BASE_OPTIONS = {
   enableEmptyDataWarningMessage: true,
   emptyDataWarning: { message: '조회된 데이터가 없습니다.' },
 
+  /*
+   * ----- 헤더 우클릭 -----
+   *
+   * 컬럼 픽커(Column Picker)는 라이브러리 기본값이 true라서 헤더를 우클릭하면
+   * "컬럼 표시/숨김 체크박스 목록" 팝업이 떴다. 여기서 끈다.
+   *  - 컬럼 표시/숨김은 그리드 메뉴(우측 상단 ☰)에 동일 기능이 있어 잃는 것이 없다.
+   *  - 대신 헤더 우클릭은 ∨ 버튼과 같은 헤더 메뉴(정렬/필터 해제/숨기기)를 연다.
+   *    (SlickGrid.vue 의 onHeaderContextMenu 핸들러가 처리)
+   */
+  enableColumnPicker: false,
+
   // ----- 정렬 -----
   multiColumnSort: true,
 };
@@ -334,9 +345,10 @@ const featuresToOptions = (features) => {
   }
 
   // ----- 컬럼 메뉴 / 그리드 메뉴 -----
+  // 컬럼 픽커(우클릭 팝업)는 BASE_OPTIONS에서 껐으므로 여기서 다시 켜지 않는다.
+  // (컬럼 표시/숨김은 그리드 메뉴 안에 있고, 헤더 우클릭은 헤더 메뉴가 대신 열린다)
   if (features.gridMenu) {
     options.enableGridMenu = true;
-    options.enableColumnPicker = true;
     options.enableHeaderMenu = true;
   }
 
