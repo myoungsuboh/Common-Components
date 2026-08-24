@@ -792,6 +792,40 @@ required / validator 검증에 걸리면 SlickGrid이 셀에 invalid 클래스�
   font-size: 12px;
 }
 
+/* ---------------------------------------------------------------------------------------------------------------
+셀 병합 (rowspan / colspan)
+
+rowMeta 의 cells: { 필드: { rowspan, colspan } } 로 병합한다 (데모 '셀 병합' 탭 참고).
+코어가 세로 병합(rowspan > 1) 셀에는 .rowspan 클래스를 붙여준다.
+--------------------------------------------------------------------------------------------------------------- */
+
+/*
+ * 세로 병합 셀은 여러 행 높이를 차지하는데 내용은 첫 행 위치(상단)에 붙어 어색하다.
+ * 세로 중앙에 오도록 flex 를 쓴다.
+ * (.slick-cell 전체에 flex 를 주면 에디터/트리가 깨지지만, .rowspan 병합 셀에만 한정하면 안전하다)
+ */
+.sg-grid-wrapper .slick-cell.rowspan {
+  display: flex;
+  align-items: center;
+}
+
+.sg-grid-wrapper .slick-cell.rowspan.sg-align-center {
+  justify-content: center;
+}
+
+.sg-grid-wrapper .slick-cell.rowspan.sg-align-right {
+  justify-content: flex-end;
+}
+
+/*
+ * 소계·합계·구분 행 강조 (rowMeta 의 rowClass: 'sg-row-emphasis' 로 지정)
+ * 하단 합계 행(--sg-summary-bg)과 같은 톤으로 본문과 구분한다.
+ */
+.sg-grid-wrapper .slick-row.sg-row-emphasis .slick-cell {
+  background: var(--sg-summary-bg);
+  font-weight: 600;
+}
+
 /* 빈 데이터 안내 문구 */
 .sg-grid-wrapper .slick-empty-data-warning {
   color: #78909c;

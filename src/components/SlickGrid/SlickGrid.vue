@@ -217,13 +217,17 @@ const props = defineProps({
   headerHeight: { type: Number, default: 20 },
 
   /** <pre>
-   * 행/셀 단위 제어 (비활성 · 스타일)
+   * 행/셀 단위 제어 (비활성 · 스타일 · 병합)
    *
    * (item, row) => {
    *   rowClass : 행 전체에 붙일 CSS 클래스
    *   disabled : 행 전체 편집 잠금 (회색 처리 + 편집 불가)
-   *   cells    : { 필드명: { disabled, class } }  개별 셀 제어
+   *   cells    : { 필드명: { disabled, class, colspan, rowspan } }  개별 셀 제어
    * }
+   *
+   * 셀 병합 : colspan(숫자 또는 '*') / rowspan(숫자)
+   *   rowspan은 :options="{ enableCellRowSpan: true, rowTopOffsetRenderType: 'top' }" 가 함께 필요.
+   *   병합은 행 순서 기반이므로 정렬/필터와 함께 쓰지 않는 것이 안전합니다 (데모 '셀 병합' 탭 참고).
    *
    * 예) 마감된 행은 편집 못 하게 :
    *   :row-meta="(item) => item.closeYn === 'Y' ? { disabled: true } : null"
@@ -497,15 +501,38 @@ const buildItemMetadata = (row) => {
   }
 
   // 셀 개별 지정 (행 전체 설정보다 우선)
-  for (const [field, cell] of Object.entries(meta.cells ?? {})) {
-    const col = slickColumns.value.find((c) => c.field === field || c.id === field);
-    if (!col) continue;
+  // 인덱스 계산은 실제 그리드 컬럼 목록 기준이어야 한다 (체크박스 선택 컬럼이 맨 앞에 끼면 인덱스가 밀린다)
+  const gridColumns = instance.value?.slickGrid?.getColumns?.() ?? slickColumns.value;
 
-    columns[col.id] = {
+  for (const [field, cell] of Object.entries(meta.cells ?? {})) {
+    const colIndex = gridColumns.findIndex((c) => c.field === field || c.id === field);
+    if (colIndex === -1) continue;
+    const col = gridColumns[colIndex];
+
+    const entry = {
       ...(columns[col.id] ?? {}),
       ...(cell.disabled ? { editorClass: null } : {}),
+      /*
+       * 셀 병합. 코어가 metadata.columns[컬럼].colspan / rowspan 을 읽어 셀을 합친다.
+       *  - colspan : 숫자 또는 '*' (행 끝까지)
+       *  - rowspan : 숫자. 그리드 옵션 enableCellRowSpan: true 가 함께 필요하다 (옵트인).
+       *    코어가 rowTopOffsetRenderType: 'top' 도 요구한다 ('transform'은 UI 깨짐 경고).
+       * 병합된 자식 셀은 코어가 아예 그리지 않는다.
+       */
+      ...(cell.colspan !== undefined ? { colspan: cell.colspan } : {}),
+      ...(cell.rowspan !== undefined ? { rowspan: cell.rowspan } : {}),
       cssClass: [cell.disabled ? "sg-cell-disabled" : null, cell.class].filter(Boolean).join(" ") || undefined,
     };
+
+    columns[col.id] = entry;
+
+    /*
+     * [주의] 병합 셀은 "컬럼 인덱스" 키로도 같은 항목을 넣어야 한다.
+     * 렌더링은 columns[id] || columns[인덱스] 로 둘 다 읽지만,
+     * rowspan 캐시를 만드는 remapRowSpanMetadataByRow 는 `+key` 숫자 변환을 해서
+     * 인덱스 키만 인식한다 (id 키는 NaN이 되어 조용히 무시됨 — 코어 소스 확인).
+     */
+    if (cell.colspan !== undefined || cell.rowspan !== undefined) columns[colIndex] = entry;
   }
 
   if (Object.keys(columns).length > 0) result.columns = columns;
@@ -591,12 +618,25 @@ const syncSelectAllCheckbox = () => {
   selectAllEl.indeterminate = selected > 0 && selected < total;
 };
 
-const wireSelectAllCheckbox = () => {
-  const grid = instance.value?.slickGrid;
-  if (!grid?.getHeaderColumn || !props.checkboxSelector || !props.multiSelect) return;
+/**
+ * @param {HTMLElement} [headerElOverride] onHeaderCellRendered가 넘겨주는 헤더 셀.
+ *   그리드 생성 직후에는 instance로 직접 찾고, 헤더 재렌더 시에는 이벤트의 node를 받는다.
+ */
+const wireSelectAllCheckbox = (headerElOverride = null) => {
+  if (!props.checkboxSelector || !props.multiSelect) return;
 
-  const headerEl = grid.getHeaderColumn(CHECKBOX_COLUMN_ID);
+  const headerEl = headerElOverride ?? instance.value?.slickGrid?.getHeaderColumn?.(CHECKBOX_COLUMN_ID);
   if (!headerEl) return;
+
+  /*
+   * [주의] header-checkbox-selectall 클래스를 우리가 직접 붙여야 한다.
+   *
+   * 이 클래스는 원래 플러그인의 renderSelectAllCheckbox()가 붙이는데,
+   * 우리는 hideSelectAllCheckbox: true 로 내장 체크박스를 숨겨서 그 함수가 아예 호출되지 않는다.
+   * 클래스가 없으면 테마 CSS의 클리핑 해제 규칙(slickgrid-custom.css)이 걸리지 않아
+   * 글자 없는 줄 상자 높이가 0이 되고, 심어놓은 체크박스가 통째로 잘려 보이지 않는다 (실제 사고).
+   */
+  headerEl.classList.add("header-checkbox-selectall");
 
   const nameEl = headerEl.querySelector(".slick-column-name") ?? headerEl;
   // 재생성 시 중복으로 쌓이지 않게 기존 것을 제거
@@ -646,6 +686,21 @@ const wireRowMeta = () => {
     if (base) return base;
     return buildItemMetadata(row);
   };
+
+  /*
+   * 첫 렌더는 이 연결보다 먼저 끝나 있으므로 반드시 다시 그려야 한다.
+   * 안 그리면 rowClass / 셀 병합 / 비활성 표시가 "처음 화면"에는 전혀 반영되지 않는다
+   * (데이터를 편집하거나 정렬해서 재렌더가 일어나야 뒤늦게 나타남 — 실측 확인).
+   *
+   * rowspan 캐시도 연결 전(메타데이터 없음) 상태로 이미 만들어져 있어 재계산이 필요하다.
+   * (캐시는 데이터 건수가 바뀔 때만 자동 재계산되므로 invalidate만으로는 갱신되지 않는다)
+   */
+  const grid = instance.value?.slickGrid;
+  if (!grid) return;
+
+  if (grid.getOptions?.()?.enableCellRowSpan) grid.remapAllColumnsRowSpan?.();
+  grid.invalidate();
+  grid.render();
 };
 
 const gridOptions = ref(
@@ -831,6 +886,19 @@ const handleClick = (e) => {
 헤더 메뉴가 없는 컬럼(gridMenu가 꺼져 있거나 excludeFromHeaderMenu 컬럼)은
 브라우저 기본 컨텍스트 메뉴를 막지 않고 그대로 둔다.
 --------------------------------------------------------------------------------------------------------------- */
+/*
+ * 헤더 셀이 (다시) 그려질 때마다 전체선택 체크박스를 다시 심는다.
+ *
+ * 컬럼 변경(setColumns) / 컬럼 표시·숨김 / 헤더 메뉴 플러그인 초기화 등은 헤더 DOM을 새로 만들기 때문에
+ * 그리드 생성 시점에 한 번만 심으면 그 뒤에 사라진다. 코어가 헤더 셀을 만들 때마다
+ * onHeaderCellRendered를 발행하므로 체크박스 컬럼이면 여기서 다시 심는다.
+ * (wireSelectAllCheckbox는 기존 것을 제거 후 추가하므로 중복 호출에 안전하다)
+ */
+const handleHeaderCellRendered = (e) => {
+  const args = slickArgs(e);
+  if (args?.column?.id === CHECKBOX_COLUMN_ID) wireSelectAllCheckbox(args.node);
+};
+
 const handleHeaderContextMenu = (e) => {
   const column = slickArgs(e)?.column;
   if (column?.id === undefined) return;
@@ -1119,6 +1187,7 @@ const passthroughAttrs = computed(() => {
       @onClick="handleClick"
       @onDblClick="handleDblClick"
       @onHeaderContextMenu="handleHeaderContextMenu"
+      @onHeaderCellRendered="handleHeaderCellRendered"
       @onCellChange="handleCellChange"
       @onSelectedRowsChanged="handleSelectedRowsChanged"
       @onGridStateChanged="handleGridStateChanged"

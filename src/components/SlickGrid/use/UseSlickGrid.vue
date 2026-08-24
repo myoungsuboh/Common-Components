@@ -22,6 +22,7 @@ const SECTIONS = [
   { key: "cell", label: "셀 표현" },
   { key: "excel", label: "엑셀" },
   { key: "view", label: "표시 · 성능" },
+  { key: "merge", label: "셀 병합" },
   { key: "extend", label: "확장" },
 ];
 
@@ -925,6 +926,148 @@ const layerCode = `커스텀 4계층 - 위에서 막히면 아래로 내려갑�
             -> 원본 Grid / DataView / Service 인스턴스를 그대로 노출.`;
 
 /* ---------------------------------------------------------------------------------------------------------------
+셀 병합 1) 세로 병합 (rowspan)
+
+SlickGrid 코어는 dataView.getItemMetadata의 columns[컬럼id].rowspan / colspan 을 읽어 셀을 합친다.
+공통 컴포넌트에서는 rowMeta의 cells로 넘기면 된다.
+
+[제약 — 반드시 알아야 함]
+- rowspan은 옵트인이다: :options="{ enableCellRowSpan: true, rowTopOffsetRenderType: 'top' }"
+  (rowTopOffsetRenderType 기본값 'transform'은 rowspan과 함께 쓰면 UI가 깨진다고 코어가 경고한다)
+- 병합은 "행 순서" 기반이다. 정렬/필터로 순서가 바뀌면 병합 구간이 어긋나므로
+  병합 컬럼은 sortable: false 로 두고, 서버에서 정렬된 순서 그대로 보여주는 화면에 쓴다.
+--------------------------------------------------------------------------------------------------------------- */
+/** 부서 -> 직급 순으로 미리 정렬된 명부 (병합은 이 순서를 전제로 한다) */
+const mergeRows = ref([
+  { id: 1, deptCd: "D1", gradeCd: "G4", name: "홍길동1", salary: 8750000, hireDt: "2010-03-02" },
+  { id: 2, deptCd: "D1", gradeCd: "G3", name: "홍길동2", salary: 7250000, hireDt: "2013-07-15" },
+  { id: 3, deptCd: "D1", gradeCd: "G3", name: "홍길동3", salary: 7000000, hireDt: "2014-01-20" },
+  { id: 4, deptCd: "D1", gradeCd: "G1", name: "홍길동4", salary: 3500000, hireDt: "2023-05-08" },
+  { id: 5, deptCd: "D2", gradeCd: "G3", name: "홍길동5", salary: 6900000, hireDt: "2015-11-11" },
+  { id: 6, deptCd: "D2", gradeCd: "G2", name: "홍길동6", salary: 5250000, hireDt: "2019-04-16" },
+  { id: 7, deptCd: "D2", gradeCd: "G2", name: "홍길동7", salary: 5000000, hireDt: "2020-09-01" },
+  { id: 8, deptCd: "D3", gradeCd: "G4", name: "홍길동8", salary: 9000000, hireDt: "2009-02-27" },
+  { id: 9, deptCd: "D3", gradeCd: "G1", name: "홍길동9", salary: 3250000, hireDt: "2024-06-03" },
+  { id: 10, deptCd: "D4", gradeCd: "G2", name: "홍길동10", salary: 4750000, hireDt: "2021-08-19" },
+  { id: 11, deptCd: "D4", gradeCd: "G2", name: "홍길동11", salary: 4500000, hireDt: "2022-02-14" },
+  { id: 12, deptCd: "D4", gradeCd: "G1", name: "홍길동12", salary: 3000000, hireDt: "2025-03-10" },
+]);
+
+const mergeColumns = [
+  // 병합 기준 컬럼은 정렬을 꺼서 순서가 바뀌지 않게 한다
+  { field: "deptCd", header: "부서", type: "code", codes: DEPT_CODES, width: 110, sortable: false },
+  { field: "gradeCd", header: "직급", type: "code", codes: GRADE_CODES, width: 100, sortable: false },
+  { field: "name", header: "이름", type: "text", width: 120, sortable: false },
+  { field: "salary", header: "급여", type: "amount", width: 140, sortable: false },
+  { field: "hireDt", header: "입사일", type: "date", width: 120, sortable: false },
+];
+
+/**
+ * 연속으로 같은 값이 이어지는 구간을 찾아 { 시작행: 병합행수 } Map으로 만든다
+ *
+ * @param {Array} rows 표시 순서대로 정렬된 행 배열
+ * @param {Function} keyOf 행 -> 병합 기준 값
+ * @returns {Map<number, number>}
+ */
+const spansOf = (rows, keyOf) => {
+  const spans = new Map();
+  let start = 0;
+
+  for (let i = 1; i <= rows.length; i++) {
+    if (i === rows.length || keyOf(rows[i]) !== keyOf(rows[start])) {
+      if (i - start > 1) spans.set(start, i - start);
+      start = i;
+    }
+  }
+
+  return spans;
+};
+
+const deptSpans = spansOf(mergeRows.value, (row) => row.deptCd);
+// 직급은 "같은 부서 안에서" 이어질 때만 묶는다 (부서 경계를 넘어 병합되면 안 됨)
+const gradeSpans = spansOf(mergeRows.value, (row) => `${row.deptCd}|${row.gradeCd}`);
+
+const mergeRowMeta = (item, row) => ({
+  cells: {
+    ...(deptSpans.has(row) ? { deptCd: { rowspan: deptSpans.get(row) } } : {}),
+    ...(gradeSpans.has(row) ? { gradeCd: { rowspan: gradeSpans.get(row) } } : {}),
+  },
+});
+
+const mergeCode = `<SlickGrid
+  v-model="rows"
+  :columns="columns"
+  :row-meta="mergeRowMeta"
+  :options="{ enableCellRowSpan: true, rowTopOffsetRenderType: 'top' }"
+/>
+
+// 1) 데이터는 병합 기준(부서 -> 직급)으로 미리 정렬해서 내려받는다
+// 2) 연속 구간을 계산해 시작 행에만 rowspan을 준다 (자식 셀은 코어가 그리지 않음)
+const deptSpans  = spansOf(rows, (r) => r.deptCd);
+const gradeSpans = spansOf(rows, (r) => \`\${r.deptCd}|\${r.gradeCd}\`);  // 부서 경계를 넘지 않게
+
+const mergeRowMeta = (item, row) => ({
+  cells: {
+    ...(deptSpans.has(row)  ? { deptCd:  { rowspan: deptSpans.get(row) } }  : {}),
+    ...(gradeSpans.has(row) ? { gradeCd: { rowspan: gradeSpans.get(row) } } : {}),
+  },
+});
+
+// [제약]
+//  - enableCellRowSpan 은 옵트인. rowTopOffsetRenderType: 'top' 도 함께 지정 (코어 요구사항)
+//  - 병합은 행 순서 기반 -> 병합 컬럼은 sortable: false, 필터도 걸지 않는다`;
+
+/* ---------------------------------------------------------------------------------------------------------------
+셀 병합 2) 가로 병합 (colspan) - 소계 행
+
+소계/합계 행에서 라벨 셀을 여러 컬럼에 걸쳐 병합하는 국내 업무화면 단골 패턴.
+colspan은 별도 그리드 옵션 없이 바로 동작한다. 숫자 또는 '*'(행 끝까지)를 쓸 수 있다.
+--------------------------------------------------------------------------------------------------------------- */
+const colspanRows = ref([
+  { id: "c1", deptNm: "개발팀", gradeNm: "부장", name: "홍길동1", salary: 8750000, hireDt: "2010-03-02" },
+  { id: "c2", deptNm: "개발팀", gradeNm: "과장", name: "홍길동2", salary: 7250000, hireDt: "2013-07-15" },
+  { id: "c3", deptNm: "개발팀", gradeNm: "사원", name: "홍길동4", salary: 3500000, hireDt: "2023-05-08" },
+  { id: "s1", subtotal: true, deptNm: "개발팀 소계 (3명)", salary: 19500000 },
+  { id: "c4", deptNm: "기획팀", gradeNm: "과장", name: "홍길동5", salary: 6900000, hireDt: "2015-11-11" },
+  { id: "c5", deptNm: "기획팀", gradeNm: "대리", name: "홍길동6", salary: 5250000, hireDt: "2019-04-16" },
+  { id: "s2", subtotal: true, deptNm: "기획팀 소계 (2명)", salary: 12150000 },
+  { id: "t1", subtotal: true, deptNm: "전체 합계 (5명)", salary: 31650000 },
+]);
+
+const colspanColumns = [
+  { field: "deptNm", header: "부서", type: "text", width: 110, sortable: false },
+  { field: "gradeNm", header: "직급", type: "text", width: 100, sortable: false, align: "center" },
+  { field: "name", header: "이름", type: "text", width: 120, sortable: false },
+  { field: "salary", header: "급여", type: "amount", width: 150, sortable: false },
+  { field: "hireDt", header: "입사일", type: "date", width: 120, sortable: false },
+];
+
+const colspanRowMeta = (item) =>
+  item.subtotal
+    ? {
+        // 행 전체 강조 (theme/slickgrid-custom.css 의 공용 클래스)
+        rowClass: "sg-row-emphasis",
+        // 부서 셀이 [부서][직급][이름] 3칸을 차지한다
+        cells: { deptNm: { colspan: 3, class: "sg-align-center" } },
+      }
+    : null;
+
+const colspanCode = `<SlickGrid v-model="rows" :columns="columns" :row-meta="colspanRowMeta" />
+
+// 소계 행은 데이터에 구분 플래그를 넣어 내려받는다
+//   { id: 's1', subtotal: true, deptNm: '개발팀 소계 (3명)', salary: 19500000 }
+
+const colspanRowMeta = (item) =>
+  item.subtotal
+    ? {
+        rowClass: 'sg-row-emphasis',                              // 소계 행 강조 (공용 클래스)
+        cells: { deptNm: { colspan: 3, class: 'sg-align-center' } }, // 3칸 병합. '*'는 행 끝까지
+      }
+    : null;
+
+// colspan은 그리드 옵션 없이 바로 동작합니다 (rowspan만 enableCellRowSpan 옵트인)`;
+
+/* ---------------------------------------------------------------------------------------------------------------
 2층 예시 - 원본 옵션 통과
 --------------------------------------------------------------------------------------------------------------- */
 const passthroughOptions = {
@@ -1537,6 +1680,30 @@ const options = {
 
           <!-- 8. 2층 : 원본 옵션 통과 -->
           <CodeCard class="mt-2 mb-6" :code="bigCode" />
+        </div>
+
+        <div v-if="section === 'merge'">
+          <h3 class="mb-1">1) 세로 병합 (rowspan) — 부서·직급 묶기</h3>
+          <p class="text-caption mb-2">
+            <code>rowMeta</code>의 <code>cells</code>에 <code>rowspan</code>을 주면 같은 값이 이어지는 구간이 한 셀로 병합됩니다. 병합은 행 순서
+            기반이므로 데이터는 병합 기준으로 미리 정렬해서 내려받고, 병합 컬럼은 <code>sortable: false</code>로 둡니다.
+          </p>
+          <SlickGrid
+            v-model="mergeRows"
+            :columns="mergeColumns"
+            :height="440"
+            :row-meta="mergeRowMeta"
+            :options="{ enableCellRowSpan: true, rowTopOffsetRenderType: 'top' }"
+          />
+          <CodeCard class="mt-2 mb-6" :code="mergeCode" />
+
+          <h3 class="mb-1">2) 가로 병합 (colspan) — 소계 행</h3>
+          <p class="text-caption mb-2">
+            소계/합계 행에서 라벨 셀을 여러 컬럼에 걸쳐 병합합니다. <code>colspan</code>은 그리드 옵션 없이 바로 동작하고, 숫자 대신
+            <code>'*'</code>를 주면 행 끝까지 병합됩니다.
+          </p>
+          <SlickGrid v-model="colspanRows" :columns="colspanColumns" :height="330" :row-meta="colspanRowMeta" />
+          <CodeCard class="mt-2 mb-6" :code="colspanCode" />
         </div>
 
         <div v-if="section === 'extend'">
