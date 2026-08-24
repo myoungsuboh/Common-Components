@@ -173,11 +173,21 @@ const BASE_OPTIONS = {
    *  - 컬럼 픽커  : 끔. 컬럼 표시/숨김은 그리드 메뉴에 동일 기능이 있다.
    *  - 헤더 메뉴  : 끔(∨ 버튼 제거). 정렬은 헤더 클릭 3단계 사이클로, 컬럼 표시/숨김·필터 초기화는
    *                 그리드 메뉴로 대신한다. 필요하면 options(2층)로 enableHeaderMenu: true 로 되살릴 수 있다.
-   *  - 그리드 메뉴: 플러그인은 켜두되 ☰ 버튼만 CSS로 숨긴다(slickgrid-custom.css).
+   *  - 그리드 메뉴: 플러그인은 켜두되 ☰ 버튼은 만들지 않는다 (아래 gridMenu.showButton: false).
    *                 헤더를 우클릭하면 열린다 (SlickGrid.vue 의 onHeaderContextMenu 핸들러).
    */
   enableColumnPicker: false,
   enableHeaderMenu: false,
+
+  /*
+   * ☰ 버튼을 아예 만들지 않는다.
+   *
+   * CSS로 버튼만 숨기면 버튼을 감싸는 .slick-grid-menu-container(고정 폭)가 남아서
+   * 헤더 오른쪽 끝에 "빈 컬럼 헤더"처럼 보이는 박스가 생긴다 (실측 확인).
+   * showButton: false 면 플러그인이 컨테이너/버튼 생성을 통째로 건너뛴다.
+   * 메뉴 자체(showGridMenu)는 버튼 없이도 동작하므로 헤더 우클릭으로 여는 데 지장이 없다.
+   */
+  gridMenu: { showButton: false },
 
   // ----- 정렬 -----
   multiColumnSort: true,

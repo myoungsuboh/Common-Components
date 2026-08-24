@@ -346,15 +346,12 @@ width:100% + border-box 상태에서 padding-right를 주면 글자 영역만 �
 }
 
 /*
- * 우측 상단 그리드 메뉴 버튼(☰) 숨김
- *
- * 헤더 오른쪽 끝에 떠 있어 마지막 컬럼을 가리고 낯설다는 피드백이 있었다.
- * 버튼만 숨기고 플러그인은 살려둔다 — 같은 메뉴를 헤더 우클릭으로 연다
- * (SlickGrid.vue 의 onHeaderContextMenu 핸들러가 showGridMenu 호출).
+ * [참고] 우측 상단 그리드 메뉴 버튼(☰)은 CSS가 아니라 그리드 옵션으로 없앤다.
+ * CSS(display:none)로 버튼만 숨기면 버튼을 감싸는 .slick-grid-menu-container(고정 폭)가 남아
+ * 헤더 오른쪽 끝에 빈 컬럼 헤더처럼 보이는 박스가 생겼다 (실측).
+ * useGridOptions의 gridMenu.showButton: false 가 컨테이너 생성 자체를 막는다.
+ * 메뉴는 헤더 우클릭으로 연다 (SlickGrid.vue 의 onHeaderContextMenu -> showGridMenu).
  */
-.sg-grid-wrapper .slick-grid-menu-button {
-  display: none;
-}
 
 /*
  * 정렬 화살표와 헤더 메뉴 버튼(∨) 겹침 방지
