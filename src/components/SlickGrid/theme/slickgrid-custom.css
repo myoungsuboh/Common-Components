@@ -289,10 +289,39 @@ display를 바꾸지 않고 text-align만 사용한다 (위 주석 4번 참고).
 }
 
 /* ---------------------------------------------------------------------------------------------------------------
-컬럼명과 헤더 메뉴 버튼(v) 겹침 방지
+헤더 메뉴 버튼(∨) 숨김 — 헤더 메뉴는 우클릭으로 연다
 
-.slick-header-menu-button 은 position:absolute; right:3px; width:22px 로 컬럼 우측에 떠 있는데
-.slick-column-name 은 컬럼 폭 전체를 쓰기 때문에 컬럼명이 길면 v 아이콘 아래로 파고든다.
+.slick-header-menu-button 은 position:absolute; right:3px; width:22px 로 컬럼 우측에 떠 있다.
+맨 오른쪽 컬럼에서는 이 자리가 우측 상단 그리드 메뉴(☰) 버튼과 겹쳐서 컨트롤이 두 개 붙어 보인다.
+그래서 버튼은 보이지 않게 하고, 같은 메뉴를 컬럼 헤더 우클릭으로 연다.
+(연결 코드는 SlickGrid.vue 의 handleHeaderContextMenu)
+
+[중요] display:none 을 쓰면 안 된다.
+라이브러리가 메뉴 위치를 이 버튼의 getBoundingClientRect() 로 계산하기 때문에
+(menuBaseClass.js repositionMenu -> getOffsetRelativeToParent) 박스가 사라지면 메뉴가
+그리드 좌측 상단(0,0)에 뜬다. visibility:hidden 은 박스를 유지한다.
+
+부수효과도 유리하다 : visibility:hidden 요소는 마우스 히트테스트에서 빠지므로
+버튼이 있던 컬럼 우측 22px을 좌클릭해도 가려지지 않고 정렬이 정상 동작한다.
+--------------------------------------------------------------------------------------------------------------- */
+.sg-grid-wrapper .slick-header-column .slick-header-menu-button {
+  visibility: hidden;
+  /*
+   * 세로 중앙 정렬은 남겨둔다.
+   * 프로젝트에서 이 버튼을 다시 보이게 할 경우(visibility: visible) 위치가 어긋나지 않도록.
+   * 테마 기본값은 상단에 붙어 있어 컬럼명과 높이가 맞지 않는다.
+   * 이 요소는 position:absolute 라서 top/transform 을 바꿔도
+   * 헤더 컬럼의 박스 크기에는 영향이 없다 (아래 [중요] 주석의 제약과 무관).
+   */
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+컬럼명이 우측 컨트롤 자리를 침범하지 않게
+
+버튼을 숨겼어도 우측 여백은 그대로 둔다.
+맨 오른쪽 컬럼에는 여전히 ☰ 버튼이 떠 있어서, 여백을 지우면 그 컬럼명이 ☰ 아래로 파고든다.
 (실측: 컬럼명 우측이 메뉴버튼을 18px 침범)
 
 [중요] .slick-header-column 에는 절대 padding/width 를 추가하면 안 된다.
@@ -311,19 +340,7 @@ width:100% + border-box 상태에서 padding-right를 주면 글자 영역만 �
   padding-right: 20px;
 }
 
-/*
- * 메뉴 버튼(v) 세로 중앙 정렬
- *
- * 테마 기본값은 상단에 붙어 있어 컬럼명과 높이가 맞지 않는다.
- * 이 요소는 position:absolute 라서 top/transform 을 바꿔도
- * 헤더 컬럼의 박스 크기에는 영향이 없다 (위 [중요] 주석의 제약과 무관).
- */
-.sg-grid-wrapper .slick-header-column .slick-header-menu-button {
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-/* 정렬 화살표도 같은 이유로 세로 중앙에 맞춘다 */
+/* 정렬 화살표는 보이는 요소이므로 세로 중앙에 맞춘다 */
 .sg-grid-wrapper .slick-header-column .slick-sort-indicator {
   top: 50%;
   transform: translateY(-50%);

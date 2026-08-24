@@ -166,6 +166,20 @@ const BASE_OPTIONS = {
 
   // ----- 정렬 -----
   multiColumnSort: true,
+
+  /*
+   * ----- 헤더 우클릭은 컬럼 선택기가 아니라 헤더 메뉴(∨ 메뉴)로 -----
+   *
+   * 라이브러리 기본값이 enableColumnPicker: true 다 (global-grid-options.js).
+   * 즉 아무 것도 지정하지 않으면 컬럼 헤더 우클릭에 ColumnPicker(컬럼 표시/숨김 목록)가 열린다.
+   * 우클릭 자리는 컬럼별 헤더 메뉴(정렬 / 컬럼 숨기기 / 컬럼 고정)를 여는 데 쓰므로 이쪽을 끈다.
+   * 실제로 우클릭을 헤더 메뉴에 연결하는 코드는 SlickGrid.vue 의 handleHeaderContextMenu 다.
+   *
+   * 우측 상단 그리드 메뉴(☰) 안의 컬럼 표시/숨김 목록은 그대로 남는다.
+   * GridMenu가 자체 섹션으로 직접 그리기 때문이다 (slickGridMenu.js 의 hideColumnPickerSection).
+   * 즉 이 옵션을 꺼도 "컬럼 숨기기"에 도달하는 경로는 헤더 메뉴와 ☰ 두 곳이다.
+   */
+  enableColumnPicker: false,
 };
 
 /**
@@ -333,10 +347,14 @@ const featuresToOptions = (features) => {
     }
   }
 
-  // ----- 컬럼 메뉴 / 그리드 메뉴 -----
+  /*
+   * ----- 컬럼 메뉴 / 그리드 메뉴 -----
+   *
+   * enableColumnPicker(헤더 우클릭 컬럼 선택기)는 여기서 켜지 않는다.
+   * 우클릭은 헤더 메뉴를 여는 데 쓰기 때문이다 (BASE_OPTIONS 의 enableColumnPicker 주석 참고).
+   */
   if (features.gridMenu) {
     options.enableGridMenu = true;
-    options.enableColumnPicker = true;
     options.enableHeaderMenu = true;
   }
 

@@ -172,6 +172,25 @@ describe('기능 플래그', () => {
   });
 });
 
+describe('컬럼 메뉴 (헤더 우클릭)', () => {
+  it('헤더 우클릭 컬럼 선택기는 항상 끈다 (라이브러리 기본값이 true라 명시적으로 꺼야 한다)', () => {
+    // 우클릭 자리는 컬럼별 헤더 메뉴가 쓴다 (SlickGrid.vue handleHeaderContextMenu)
+    expect(buildGridOptions({}).enableColumnPicker).toBe(false);
+    expect(buildGridOptions({ gridMenu: true }).enableColumnPicker).toBe(false);
+  });
+
+  it('gridMenu는 우측 상단 ☰ 와 컬럼 헤더 메뉴를 켠다', () => {
+    const options = buildGridOptions({ gridMenu: true });
+
+    expect(options.enableGridMenu).toBe(true);
+    expect(options.enableHeaderMenu).toBe(true);
+  });
+
+  it('2층에서 컬럼 선택기를 되살릴 수 있다 (그때는 우클릭을 선택기가 가져간다)', () => {
+    expect(buildGridOptions({ gridMenu: true }, { enableColumnPicker: true }).enableColumnPicker).toBe(true);
+  });
+});
+
 describe('엑셀 내보내기 (한글 안전)', () => {
   it("format을 'xlsx'로 고정한다 (xls는 인코딩 정보가 없어 한글이 깨진다)", () => {
     const options = buildGridOptions({ excelExport: true, exportFilename: '사원목록', exportSheetName: '사원' });

@@ -108,8 +108,17 @@ const apiGuide = `주요 Props
   checkbox-selector 체크박스 컬럼+전체선택       row-meta       행/셀 잠금·스타일 함수
   pageable        페이지네이션                   pagination-align left|center|right
   fetch-data      서버 사이드 조회 함수          excel-export   엑셀 내보내기
-  groupable       드래그 그룹핑                  grid-menu      우측 상단 메뉴
+  groupable       드래그 그룹핑                  grid-menu      우측 상단 ☰ + 헤더 우클릭 메뉴
   height / width  'auto' | 숫자                  dark           다크 모드
+
+컬럼 헤더 메뉴 = 헤더 우클릭
+  컬럼 헤더를 우클릭하면 그 컬럼의 메뉴(오름/내림 정렬, 컬럼 숨기기, 컬럼 고정)가 열립니다.
+  컬럼마다 뜨던 ∨ 버튼은 맨 오른쪽 컬럼에서 ☰ 버튼과 자리가 겹치므로 숨겼습니다.
+  숨긴 컬럼을 다시 보이게 하려면 ☰ 메뉴의 컬럼 목록에서 체크하세요.
+  행번호(No) 컬럼은 정렬/숨김 대상이 아니라서 메뉴가 열리지 않습니다.
+
+  ☰ 와 헤더 메뉴는 라이브러리 기본값이 켜짐이라 grid-menu 를 주지 않아도 나타납니다.
+  아예 없이 쓰려면 :options="{ enableGridMenu: false, enableHeaderMenu: false }"
 
 주요 이벤트 (payload는 detail 벗겨서 전달)
   @on-grid-created      원본 인스턴스 (4층)      @on-row-click        행 클릭
@@ -950,7 +959,7 @@ const filterCode = `<SlickGrid
   filterable          <!-- 컬럼별 필터 행 -->
   selectable          <!-- 행 선택 -->
   checkbox-selector   <!-- 좌측 체크박스 + 좌측 상단 전체선택 -->
-  grid-menu           <!-- 우측 상단 햄버거(컬럼 표시/숨김, 필터 초기화) -->
+  grid-menu           <!-- 우측 상단 ☰(컬럼 표시/숨김, 필터 초기화) + 헤더 우클릭 메뉴 -->
   @on-selection-change="({ rows, items }) => ..."
 />
 
@@ -1099,7 +1108,8 @@ const options = {
   rowHeight: 44,
   headerRowHeight: 42,
   enableExcelCopyBuffer: true,   // 엑셀처럼 셀 복사/붙여넣기
-  enableContextMenu: true,       // 우클릭 메뉴
+  enableContextMenu: true,       // 셀 우클릭 메뉴
+  enableColumnPicker: true,      // 헤더 우클릭을 컬럼 선택기로 되돌림 (기본은 컬럼 헤더 메뉴)
 };
 
 /* 병합 규칙

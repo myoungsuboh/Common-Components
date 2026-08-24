@@ -117,7 +117,16 @@ const props = defineProps({
   },
   /** 페이지당 건수 셀렉터 표시 여부 */
   paginationShowPageSize: { type: Boolean, default: true },
-  /** 우측 상단 그리드 메뉴 + 컬럼 선택기 + 헤더 메뉴 */
+  /** <pre>
+   * 우측 상단 그리드 메뉴(☰) + 컬럼 헤더 메뉴
+   *
+   * 컬럼 헤더 메뉴(정렬 / 컬럼 숨기기 / 컬럼 고정)는 컬럼 헤더를 우클릭하면 열립니다.
+   * (컬럼마다 뜨는 ∨ 버튼은 맨 오른쪽에서 ☰ 와 겹치므로 숨겨두었습니다)
+   *
+   * [참고] 이 두 메뉴는 라이브러리 기본값(enableGridMenu / enableHeaderMenu)이 true라서
+   * 이 prop을 주지 않아도 나타납니다. 완전히 감추려면 2층에서 직접 꺼야 합니다.
+   *   :options="{ enableGridMenu: false, enableHeaderMenu: false }"
+   * </pre> */
   gridMenu: { type: Boolean, default: false },
   /** <pre>
    * 헤더를 상단 패널로 드래그해서 그룹핑
@@ -828,6 +837,44 @@ const handleDblClick = (e) => {
   });
 };
 
+/* ---------------------------------------------------------------------------------------------------------------
+컬럼 헤더 우클릭 -> 컬럼별 헤더 메뉴(정렬 / 컬럼 숨기기 / 컬럼 고정)
+
+헤더 메뉴는 원래 컬럼마다 우측에 뜨는 ∨ 버튼으로 열린다.
+그런데 그 버튼은 position:absolute 로 컬럼 우측에 떠 있어서, 맨 오른쪽 컬럼에서는
+우측 상단 그리드 메뉴(☰)와 같은 자리에 겹친다.
+그래서 ∨ 버튼은 CSS로 숨기고(theme/slickgrid-custom.css) 같은 메뉴를 우클릭으로 연다.
+
+숨긴 버튼의 click()을 그대로 호출하는 이유:
+ - 라이브러리가 버튼에 걸어둔 핸들러가 disposeAllMenus() 로 열려 있는 메뉴를 먼저 정리한 뒤
+   createParentMenu()를 부른다. 직접 createParentMenu()를 부르면 그 정리 단계까지 우리가 재현해야 하고,
+   그건 protected 메서드라 버전이 올라가면 조용히 깨진다.
+ - 메뉴 위치는 repositionMenu()가 이벤트 target의 getBoundingClientRect()로 계산한다.
+   버튼을 target으로 넘기면 위치 계산이 기존(∨ 클릭)과 완전히 같아진다.
+   (그래서 CSS는 display:none 이 아니라 visibility:hidden 이어야 한다 — 박스가 남아야 한다)
+
+행번호 컬럼처럼 excludeFromHeaderMenu 인 컬럼에는 버튼이 만들어지지 않으므로 메뉴도 열리지 않는다.
+그 경우에도 브라우저 기본 우클릭 메뉴는 막는다 (컬럼마다 우클릭 동작이 달라 보이지 않게).
+--------------------------------------------------------------------------------------------------------------- */
+const handleHeaderContextMenu = (e) => {
+  /*
+   * 2층(:options)에서 컬럼 선택기를 되살린 프로젝트라면 우클릭의 주인은 그쪽이다.
+   * 그때 우리까지 헤더 메뉴를 열면 메뉴 두 개가 같은 자리에 겹쳐 뜬다.
+   * (선택기는 자기 핸들러에서 브라우저 기본 메뉴를 막으므로 여기서는 그냥 빠진다)
+   */
+  if (gridOptions.value?.enableColumnPicker) return;
+
+  // eventData는 SlickEventData이고 preventDefault()가 원본 마우스 이벤트로 전달된다
+  e?.detail?.eventData?.preventDefault?.();
+
+  // 헤더의 빈 여백이나 ☰ 버튼 위를 우클릭하면 column이 없다
+  const column = slickArgs(e)?.column;
+  if (!column) return;
+
+  const headerEl = instance.value?.slickGrid?.getHeaderColumn?.(column.id);
+  headerEl?.querySelector(".slick-header-menu-button")?.click();
+};
+
 const handleCellChange = (e) => {
   const args = slickArgs(e);
   if (!args) return;
@@ -1092,6 +1139,7 @@ const passthroughAttrs = computed(() => {
       @onVueGridCreated="handleGridCreated"
       @onClick="handleClick"
       @onDblClick="handleDblClick"
+      @onHeaderContextMenu="handleHeaderContextMenu"
       @onCellChange="handleCellChange"
       @onSelectedRowsChanged="handleSelectedRowsChanged"
       @onGridStateChanged="handleGridStateChanged"
