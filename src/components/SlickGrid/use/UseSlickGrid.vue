@@ -109,7 +109,7 @@ const apiGuide = `주요 Props
   checkbox-selector 체크박스 컬럼+전체선택       row-meta       행/셀 잠금·스타일 함수
   pageable        페이지네이션                   pagination-align left|center|right
   fetch-data      서버 사이드 조회 함수          excel-export   엑셀 내보내기
-  groupable       드래그 그룹핑                  grid-menu      우측 상단 메뉴
+  groupable       드래그 그룹핑                  grid-menu      헤더 우클릭 메뉴
   height / width  'auto' | 숫자                  dark           다크 모드
 
 주요 이벤트 (payload는 detail 벗겨서 전달)
@@ -1093,7 +1093,7 @@ const filterCode = `<SlickGrid
   filterable          <!-- 컬럼별 필터 행 -->
   selectable          <!-- 행 선택 -->
   checkbox-selector   <!-- 좌측 체크박스 + 좌측 상단 전체선택 -->
-  grid-menu           <!-- 우측 상단 햄버거(컬럼 표시/숨김, 필터 초기화) -->
+  grid-menu           <!-- 헤더 우클릭 시 그리드 메뉴(컬럼 표시/숨김, 필터 초기화) -->
   @on-selection-change="({ rows, items }) => ..."
 />
 
@@ -1163,7 +1163,7 @@ const excelCode = `<Button @click="download">엑셀 다운로드</Button>
   excel-export
   export-filename="사원목록"      <!-- 한글 파일명 가능 -->
   export-sheet-name="사원"
-  grid-menu                       <!-- 햄버거 메뉴에도 "엑셀로 내보내기"가 생깁니다 -->
+  grid-menu                       <!-- 헤더 우클릭 그리드 메뉴에 "엑셀로 내보내기"가 생깁니다 -->
 />
 
 const download = () => gridRef.value.exportToExcel();
@@ -1324,8 +1324,8 @@ const options = {
         <div v-if="section === 'search'">
           <h3 class="mb-1">1) 필터 행 + 체크박스 선택 + 그리드 메뉴</h3>
           <p class="text-caption mb-2">
-            총 {{ selectedCount }}건. 우측 상단 햄버거 메뉴에서 컬럼 표시/숨김, 필터 초기화가 가능합니다. 컬럼 헤더는 ∨ 클릭 또는 우클릭으로 헤더
-            메뉴(정렬/필터 해제/숨기기)가 열립니다. code/yn 타입은 필터가 자동으로 셀렉트박스가 됩니다.
+            총 {{ selectedCount }}건. 헤더를 우클릭하면 그리드 메뉴(컬럼 표시/숨김, 필터 초기화)가 열립니다. 정렬은 헤더 클릭 3단계(오름 → 내림 →
+            해제)로 동작합니다. code/yn 타입은 필터가 자동으로 셀렉트박스가 됩니다.
           </p>
           <SlickGrid
             v-model="filterRows"

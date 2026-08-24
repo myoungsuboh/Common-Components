@@ -117,7 +117,13 @@ const props = defineProps({
   },
   /** 페이지당 건수 셀렉터 표시 여부 */
   paginationShowPageSize: { type: Boolean, default: true },
-  /** 우측 상단 그리드 메뉴(☰) + 각 컬럼 헤더 메뉴(∨). 헤더 우클릭으로도 헤더 메뉴가 열립니다. */
+  /** <pre>
+   * 그리드 메뉴 — 헤더를 우클릭하면 열립니다 (컬럼 표시/숨김, 필터 초기화 등)
+   *
+   * 헤더에 버튼이 뜨지 않습니다. 우측 상단 ☰ 버튼은 숨겨져 있고
+   * 컬럼별 ∨ 헤더 메뉴도 꺼져 있습니다 (정렬은 헤더 클릭 3단계 사이클로 처리).
+   * ∨ 메뉴가 꼭 필요하면 :options="{ enableHeaderMenu: true }" 로 되살릴 수 있습니다.
+   * </pre> */
   gridMenu: { type: Boolean, default: false },
   /** <pre>
    * 헤더를 상단 패널로 드래그해서 그룹핑
@@ -874,17 +880,16 @@ const handleClick = (e) => {
 };
 
 /* ---------------------------------------------------------------------------------------------------------------
-헤더 우클릭 -> 헤더 메뉴(∨와 동일)
+헤더 우클릭 -> 그리드 메뉴 (컬럼 표시/숨김 · 필터 초기화 등)
 
-원래는 라이브러리 기본 컬럼 픽커(컬럼 표시/숨김 체크박스 팝업)가 떴는데 useGridOptions에서 껐다.
-대신 ∨ 버튼을 눌렀을 때 나오는 헤더 메뉴(정렬 / 필터 해제 / 컬럼 숨기기)를 연다.
+우측 상단에 떠 있던 ☰ 버튼은 CSS로 숨기고(slickgrid-custom.css), 그 메뉴를 헤더 우클릭으로 연다.
+컬럼별 ∨ 헤더 메뉴도 기본으로 꺼져 있으므로(useGridOptions) 헤더에는 버튼이 하나도 뜨지 않는다.
+정렬은 헤더 클릭 3단계 사이클, 컬럼 표시/숨김·필터 초기화는 이 우클릭 메뉴가 담당한다.
 
-헤더 메뉴 플러그인은 ∨ 버튼(.slick-header-menu-button)에 클릭 리스너를 직접 걸어두므로
-그 버튼을 프로그래매틱하게 click() 하는 것이 플러그인 내부 API에 기대지 않는 가장 안전한 방법이다.
-(SlickHeaderMenu.createParentMenu 는 private이라 직접 호출하면 버전업 때 깨질 수 있다)
-
-헤더 메뉴가 없는 컬럼(gridMenu가 꺼져 있거나 excludeFromHeaderMenu 컬럼)은
-브라우저 기본 컨텍스트 메뉴를 막지 않고 그대로 둔다.
+플러그인의 showGridMenu(event)는 이벤트 좌표가 아니라 event.target "요소의 위치"를 기준으로
+메뉴를 배치한다 (repositionMenu가 buttonElm의 offset을 읽는다 — 소스 확인).
+그래서 클릭 지점에 보이지 않는 0px 앵커 버튼을 잠깐 만들어 target으로 넘긴다.
+(플러그인 자신의 openGridMenu()도 같은 가짜 버튼 기법을 쓴다 — 다만 위치 지정이 없어 직접 만든다)
 --------------------------------------------------------------------------------------------------------------- */
 /*
  * 헤더 셀이 (다시) 그려질 때마다 전체선택 체크박스를 다시 심는다.
@@ -900,16 +905,37 @@ const handleHeaderCellRendered = (e) => {
 };
 
 const handleHeaderContextMenu = (e) => {
-  const column = slickArgs(e)?.column;
-  if (column?.id === undefined) return;
+  const gridMenuPlugin = instance.value?.extensionService?.getExtensionInstanceByName?.("gridMenu");
+  // 그리드 메뉴가 없으면(enableGridMenu: false) 브라우저 기본 컨텍스트 메뉴를 막지 않는다
+  if (typeof gridMenuPlugin?.showGridMenu !== "function") return;
 
-  const headerEl = instance.value?.slickGrid?.getHeaderColumn?.(column.id);
-  const menuButton = headerEl?.querySelector?.(".slick-header-menu-button");
-  if (!menuButton) return;
-
+  const eventData = e?.detail?.eventData;
   // SlickEventData.preventDefault()가 네이티브 이벤트까지 막아 브라우저 컨텍스트 메뉴가 뜨지 않는다
-  e?.detail?.eventData?.preventDefault?.();
-  menuButton.click();
+  eventData?.preventDefault?.();
+
+  // 우클릭 좌표. SlickEventData가 네이티브 이벤트를 감싸고 있다.
+  const native = eventData?.nativeEvent ?? eventData;
+  const x = native?.clientX ?? 0;
+  const y = native?.clientY ?? 0;
+
+  // 클릭 지점에 보이지 않는 앵커를 만들어 메뉴의 기준 요소로 쓴다
+  const anchor = document.createElement("button");
+  anchor.type = "button";
+  anchor.setAttribute("aria-hidden", "true");
+  anchor.style.cssText = `position:fixed;left:${x}px;top:${y}px;width:0;height:0;padding:0;border:0;opacity:0;pointer-events:none;`;
+  document.body.appendChild(anchor);
+
+  const clickEvent = new MouseEvent("click", { bubbles: true, cancelable: true });
+  // MouseEvent.target은 읽기 전용이라 defineProperty로 심는다 (플러그인 openGridMenu와 같은 방식)
+  Object.defineProperty(clickEvent, "target", { writable: true, configurable: true, value: anchor });
+
+  try {
+    // dropSide 'right' = 앵커(클릭 지점) 오른쪽 아래로 펼침. 기본값 left는 화면 왼쪽 밖으로 나갈 수 있다.
+    gridMenuPlugin.showGridMenu(clickEvent, { dropSide: "right" });
+  } finally {
+    // 위치 계산은 showGridMenu 안에서 동기적으로 끝나므로 바로 지워도 된다
+    anchor.remove();
+  }
 };
 
 /* ---------------------------------------------------------------------------------------------------------------
