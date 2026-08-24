@@ -279,13 +279,21 @@ display를 바꾸지 않고 text-align만 사용한다 (위 주석 4번 참고).
  *
  * 부모(.slick-column-name)가 flex 컨테이너라서 flex-basis를 고정하지 않으면
  * 기본 flex-shrink 때문에 폭이 0으로 줄어 보이지 않는다 (실측 0px).
+ *
+ * [중요] 셀렉터에 .slick-column-name 이 반드시 들어가야 한다 (지우면 안 됨).
+ * 테마가 자체 아이콘 렌더링을 전제로 네이티브 체크박스를 숨겨버리기 때문:
+ *   .slick-column-name input[type=checkbox] { opacity: 0; width: 0 }   (특정도 0,2,1)
+ * 우리 체크박스는 테마의 아이콘 컨테이너 없이 네이티브 그대로 쓰므로 이 규칙을 이겨야 한다.
+ * .sg-grid-wrapper .sg-selectall (0,2,0) 로는 지고, 클래스 3개(0,3,0)면 이긴다.
+ * 실제로 이것 때문에 체크박스가 opacity 0으로 존재하지만 안 보이는 사고가 있었다 (실측).
  */
-.sg-grid-wrapper .sg-selectall {
+.sg-grid-wrapper .slick-column-name .sg-selectall {
   flex: 0 0 15px;
   width: 15px;
   height: 15px;
   min-width: 15px;
   margin: 0;
+  opacity: 1;
   accent-color: var(--sg-primary);
   cursor: pointer;
 }
