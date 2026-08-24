@@ -155,6 +155,12 @@ SlickGrid 변수 매핑
   --slick-icon-sort-color: var(--sg-primary);
   /* 정렬 화살표 크기. 테마 기본 23px는 13px 헤더 글자 옆에 두기엔 크다 */
   --slick-icon-sort-font-size: 16px;
+  /*
+   * 정렬 화살표는 "정렬이 걸린 컬럼"에만 보여야 한다.
+   * 테마는 정렬 가능한 헤더에 마우스를 올리면 반투명(0.5) 힌트 화살표를 미리 보여주는데
+   * 정렬이 안 걸렸는데 화살표가 어른거려 혼란스럽다는 피드백이 있어 끈다.
+   */
+  --slick-sort-indicator-hint-opacity: 0;
   --slick-sorting-header-color: var(--sg-primary);
   --slick-checkbox-icon-color: var(--sg-primary);
   --slick-pagination-icon-color: var(--sg-primary);
@@ -340,15 +346,26 @@ width:100% + border-box 상태에서 padding-right를 주면 글자 영역만 �
 }
 
 /*
+ * [참고] 우측 상단 그리드 메뉴 버튼(☰)은 CSS가 아니라 그리드 옵션으로 없앤다.
+ * CSS(display:none)로 버튼만 숨기면 버튼을 감싸는 .slick-grid-menu-container(고정 폭)가 남아
+ * 헤더 오른쪽 끝에 빈 컬럼 헤더처럼 보이는 박스가 생겼다 (실측).
+ * useGridOptions의 gridMenu.showButton: false 가 컨테이너 생성 자체를 막는다.
+ * 메뉴는 헤더 우클릭으로 연다 (SlickGrid.vue 의 onHeaderContextMenu -> showGridMenu).
+ */
+
+/*
  * 정렬 화살표와 헤더 메뉴 버튼(∨) 겹침 방지
+ *
+ * [참고] 헤더 메뉴(∨)는 이제 기본으로 꺼져 있다 (useGridOptions의 enableHeaderMenu: false).
+ * 아래 :has(.slick-header-menu-button) 규칙들은 버튼이 없으면 매칭되지 않는 no-op이지만,
+ * 프로젝트가 options(2층)로 enableHeaderMenu: true 를 되살렸을 때 겹침이 재발하지 않도록 유지한다.
  *
  * 테마는 화살표(.slick-sort-indicator)를 right:3px 에 두는데
  * 헤더 메뉴 버튼(.slick-header-menu-button)도 right:3px 라서 정확히 같은 자리다.
  * 정렬을 걸면 화살표가 ∨ 위에 포개져 아이콘이 두 개 겹친 것처럼 보인다 (실측 확인).
  * 메뉴 버튼이 있는 컬럼에서만 화살표를 버튼 왼쪽(24px)으로 옮긴다.
- * (버튼이 없는 컬럼은 :has 가 매칭되지 않아 원래 위치 그대로다)
  *
- * 화살표 크기는 테마 변수 --slick-icon-sort-font-size 로 줄인다 (아래 변수 매핑 블록 참고).
+ * 화살표 크기는 테마 변수 --slick-icon-sort-font-size 로 줄인다 (위 변수 매핑 블록 참고).
  * font-size를 직접 지정하면 테마 규칙의 특정도에 밀려 적용되지 않는다 (실측 확인).
  */
 .sg-grid-wrapper .slick-header-column:has(.slick-header-menu-button) .slick-sort-indicator {

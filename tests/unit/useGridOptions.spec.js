@@ -189,15 +189,23 @@ describe('기능 플래그', () => {
     expect(buildGridOptions({ gridMenu: true }).enableColumnPicker).toBe(false);
   });
 
-  it('gridMenu는 그리드 메뉴(☰)와 헤더 메뉴(∨)만 켠다', () => {
+  it('컬럼별 헤더 메뉴(∨ 버튼)는 항상 꺼져 있다 (gridMenu를 켜도)', () => {
+    // 헤더에는 버튼이 뜨지 않는다. 그리드 메뉴는 헤더 우클릭으로, 정렬은 클릭 3단계로 처리
+    expect(buildGridOptions().enableHeaderMenu).toBe(false);
+    expect(buildGridOptions({ gridMenu: true }).enableHeaderMenu).toBe(false);
+  });
+
+  it('gridMenu는 그리드 메뉴만 켠다 (☰ 버튼은 만들지 않고 헤더 우클릭으로 연다)', () => {
     const options = buildGridOptions({ gridMenu: true });
 
     expect(options.enableGridMenu).toBe(true);
-    expect(options.enableHeaderMenu).toBe(true);
+    // ☰ 버튼(과 그 컨테이너)이 헤더에 빈 박스로 남지 않도록 생성 자체를 막는다
+    expect(options.gridMenu.showButton).toBe(false);
   });
 
-  it('사용자 options로는 컬럼 픽커를 다시 켤 수 있다 (2층 탈출구)', () => {
+  it('사용자 options로는 컬럼 픽커/헤더 메뉴를 다시 켤 수 있다 (2층 탈출구)', () => {
     expect(buildGridOptions({}, { enableColumnPicker: true }).enableColumnPicker).toBe(true);
+    expect(buildGridOptions({}, { enableHeaderMenu: true }).enableHeaderMenu).toBe(true);
   });
 });
 
