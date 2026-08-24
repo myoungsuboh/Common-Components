@@ -177,6 +177,18 @@ const BASE_OPTIONS = {
 
   // ----- 정렬 -----
   multiColumnSort: true,
+
+  /*
+   * 3단계 정렬 사이클 : 클릭 1회 오름차순 -> 2회 내림차순 -> 3회 정렬 해제
+   *
+   * 기본값(false)은 오름/내림만 반복되어 사용자가 정렬을 풀 방법이 헤더 메뉴뿐이다.
+   * 국내 업무 그리드(RealGrid/DevExtreme 등)의 일반적인 동작에 맞춰 3단계로 켠다.
+   *
+   * [주의] 3번째 클릭에서 코어는 정렬 아이콘만 지우고 데이터는 마지막 정렬 순서로 남는다.
+   * (SortService가 빈 배열로 dataView.sort()를 호출하는데 이는 순서를 바꾸지 않는 안정 정렬)
+   * 원래 순서 복귀는 SlickGrid.vue의 onSort 핸들러가 처리한다 (헤더 메뉴 '정렬 해제'와 동일 경로).
+   */
+  tristateMultiColumnSort: true,
 };
 
 /**
@@ -232,7 +244,15 @@ const featuresToOptions = (features) => {
 
   // ----- 행 고유 키 -----
   // 행 선택/갱신/트리가 이 필드를 기준으로 동작한다. 데이터에 id가 없으면 반드시 바꿔줘야 한다.
-  if (features.idField) options.datasetIdPropertyName = features.idField;
+  if (features.idField) {
+    options.datasetIdPropertyName = features.idField;
+    /*
+     * 정렬 해제 시 되돌아갈 기준 필드도 함께 맞춘다.
+     * 라이브러리 기본값이 'id' 고정이라, idField를 empNo로 바꾼 데이터(id 없음)에서
+     * 정렬을 해제하면 존재하지 않는 id 필드로 정렬을 시도해 순서가 이상해진다.
+     */
+    options.defaultColumnSortFieldId = features.idField;
+  }
 
   // ----- 행 높이 -----
   if (Number.isFinite(features.rowHeight)) options.rowHeight = features.rowHeight;

@@ -912,6 +912,32 @@ const handleHeaderContextMenu = (e) => {
   menuButton.click();
 };
 
+/* ---------------------------------------------------------------------------------------------------------------
+3단계 정렬의 "해제" 처리 (오름차순 -> 내림차순 -> 해제)
+
+tristateMultiColumnSort의 3번째 클릭에서 코어는 정렬 아이콘만 지우고
+빈 정렬 목록으로 onSort를 발행한다. SortService는 빈 배열로 dataView.sort()를
+호출하는데 이는 순서를 바꾸지 않는 안정 정렬이라 데이터가 마지막 정렬 순서로 남는다.
+-> 화살표는 사라졌는데 원래 순서로 돌아오지 않는 상태 (실측 확인).
+
+그래서 정렬이 모두 해제되면 헤더 메뉴의 '정렬 해제'와 같은 경로인
+sortLocalGridByDefaultSortFieldId() 로 기본 정렬 필드(idField) 오름차순으로 되돌린다.
+
+서버 모드에서는 아무것도 하지 않는다 — SortService가 빈 sorters로 재조회를 트리거하고
+서버가 원본 순서로 다시 내려준다.
+--------------------------------------------------------------------------------------------------------------- */
+const handleSort = (e) => {
+  const args = slickArgs(e);
+  if (!args) return;
+
+  // 다중 정렬(sortCols 배열)과 단일 정렬(sortCol 하나) 두 형태를 모두 처리
+  const sortCols = args.sortCols ?? (args.sortCol ? [args] : []);
+  if (sortCols.length > 0) return;
+
+  if (props.fetchData) return;
+  instance.value?.sortService?.sortLocalGridByDefaultSortFieldId?.();
+};
+
 const handleDblClick = (e) => {
   const args = slickArgs(e);
   if (!args) return;
@@ -1185,6 +1211,7 @@ const passthroughAttrs = computed(() => {
       v-bind="passthroughAttrs"
       @onVueGridCreated="handleGridCreated"
       @onClick="handleClick"
+      @onSort="handleSort"
       @onDblClick="handleDblClick"
       @onHeaderContextMenu="handleHeaderContextMenu"
       @onHeaderCellRendered="handleHeaderCellRendered"
