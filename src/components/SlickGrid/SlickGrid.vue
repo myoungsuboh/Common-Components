@@ -117,7 +117,7 @@ const props = defineProps({
   },
   /** 페이지당 건수 셀렉터 표시 여부 */
   paginationShowPageSize: { type: Boolean, default: true },
-  /** 우측 상단 그리드 메뉴 + 컬럼 선택기 + 헤더 메뉴 */
+  /** 우측 상단 그리드 메뉴(☰) + 각 컬럼 헤더 메뉴(∨). 헤더 우클릭으로도 헤더 메뉴가 열립니다. */
   gridMenu: { type: Boolean, default: false },
   /** <pre>
    * 헤더를 상단 패널로 드래그해서 그룹핑
@@ -818,6 +818,32 @@ const handleClick = (e) => {
   emit("on-row-click", { ...args, item, column });
 };
 
+/* ---------------------------------------------------------------------------------------------------------------
+헤더 우클릭 -> 헤더 메뉴(∨와 동일)
+
+원래는 라이브러리 기본 컬럼 픽커(컬럼 표시/숨김 체크박스 팝업)가 떴는데 useGridOptions에서 껐다.
+대신 ∨ 버튼을 눌렀을 때 나오는 헤더 메뉴(정렬 / 필터 해제 / 컬럼 숨기기)를 연다.
+
+헤더 메뉴 플러그인은 ∨ 버튼(.slick-header-menu-button)에 클릭 리스너를 직접 걸어두므로
+그 버튼을 프로그래매틱하게 click() 하는 것이 플러그인 내부 API에 기대지 않는 가장 안전한 방법이다.
+(SlickHeaderMenu.createParentMenu 는 private이라 직접 호출하면 버전업 때 깨질 수 있다)
+
+헤더 메뉴가 없는 컬럼(gridMenu가 꺼져 있거나 excludeFromHeaderMenu 컬럼)은
+브라우저 기본 컨텍스트 메뉴를 막지 않고 그대로 둔다.
+--------------------------------------------------------------------------------------------------------------- */
+const handleHeaderContextMenu = (e) => {
+  const column = slickArgs(e)?.column;
+  if (column?.id === undefined) return;
+
+  const headerEl = instance.value?.slickGrid?.getHeaderColumn?.(column.id);
+  const menuButton = headerEl?.querySelector?.(".slick-header-menu-button");
+  if (!menuButton) return;
+
+  // SlickEventData.preventDefault()가 네이티브 이벤트까지 막아 브라우저 컨텍스트 메뉴가 뜨지 않는다
+  e?.detail?.eventData?.preventDefault?.();
+  menuButton.click();
+};
+
 const handleDblClick = (e) => {
   const args = slickArgs(e);
   if (!args) return;
@@ -1092,6 +1118,7 @@ const passthroughAttrs = computed(() => {
       @onVueGridCreated="handleGridCreated"
       @onClick="handleClick"
       @onDblClick="handleDblClick"
+      @onHeaderContextMenu="handleHeaderContextMenu"
       @onCellChange="handleCellChange"
       @onSelectedRowsChanged="handleSelectedRowsChanged"
       @onGridStateChanged="handleGridStateChanged"

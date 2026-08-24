@@ -1181,8 +1181,8 @@ const options = {
         <div v-if="section === 'search'">
           <h3 class="mb-1">1) 필터 행 + 체크박스 선택 + 그리드 메뉴</h3>
           <p class="text-caption mb-2">
-            총 {{ selectedCount }}건. 우측 상단 햄버거 메뉴에서 컬럼 표시/숨김, 필터 초기화가 가능합니다. code/yn 타입은 필터가 자동으로 셀렉트박스가
-            됩니다.
+            총 {{ selectedCount }}건. 우측 상단 햄버거 메뉴에서 컬럼 표시/숨김, 필터 초기화가 가능합니다. 컬럼 헤더는 ∨ 클릭 또는 우클릭으로 헤더
+            메뉴(정렬/필터 해제/숨기기)가 열립니다. code/yn 타입은 필터가 자동으로 셀렉트박스가 됩니다.
           </p>
           <SlickGrid
             v-model="filterRows"

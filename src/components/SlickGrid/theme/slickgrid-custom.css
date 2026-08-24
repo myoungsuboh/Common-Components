@@ -153,6 +153,8 @@ SlickGrid 변수 매핑
    * lite 테마에서 초록 기본값을 갖는 변수를 전부 찾아(#009530|#00c840 grep) 프로젝트 색으로 덮는다.
    */
   --slick-icon-sort-color: var(--sg-primary);
+  /* 정렬 화살표 크기. 테마 기본 23px는 13px 헤더 글자 옆에 두기엔 크다 */
+  --slick-icon-sort-font-size: 16px;
   --slick-sorting-header-color: var(--sg-primary);
   --slick-checkbox-icon-color: var(--sg-primary);
   --slick-pagination-icon-color: var(--sg-primary);
@@ -327,6 +329,28 @@ width:100% + border-box 상태에서 padding-right를 주면 글자 영역만 �
 .sg-grid-wrapper .slick-header-column .slick-sort-indicator {
   top: 50%;
   transform: translateY(-50%);
+}
+
+/*
+ * 정렬 화살표와 헤더 메뉴 버튼(∨) 겹침 방지
+ *
+ * 테마는 화살표(.slick-sort-indicator)를 right:3px 에 두는데
+ * 헤더 메뉴 버튼(.slick-header-menu-button)도 right:3px 라서 정확히 같은 자리다.
+ * 정렬을 걸면 화살표가 ∨ 위에 포개져 아이콘이 두 개 겹친 것처럼 보인다 (실측 확인).
+ * 메뉴 버튼이 있는 컬럼에서만 화살표를 버튼 왼쪽(24px)으로 옮긴다.
+ * (버튼이 없는 컬럼은 :has 가 매칭되지 않아 원래 위치 그대로다)
+ *
+ * 화살표 크기는 테마 변수 --slick-icon-sort-font-size 로 줄인다 (아래 변수 매핑 블록 참고).
+ * font-size를 직접 지정하면 테마 규칙의 특정도에 밀려 적용되지 않는다 (실측 확인).
+ */
+.sg-grid-wrapper .slick-header-column:has(.slick-header-menu-button) .slick-sort-indicator {
+  /* ∨ 버튼이 right:3px + 너비 22px 를 차지하므로 그 왼쪽에 놓는다 */
+  right: 26px;
+}
+
+/* 정렬된 컬럼은 컬럼명이 화살표+∨ 영역을 침범하지 않게 여백을 더 준다 (기본 20px -> 46px) */
+.sg-grid-wrapper .slick-header-column:has(.slick-header-menu-button).slick-header-column-sorted .slick-column-name {
+  padding-right: 46px;
 }
 
 /*
