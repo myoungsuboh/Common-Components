@@ -838,6 +838,38 @@ const handleDblClick = (e) => {
 };
 
 /* ---------------------------------------------------------------------------------------------------------------
+정렬 3단계 : 오름차순 -> 내림차순 -> 해제(원래 순서)
+
+앞의 두 단계와 정렬 아이콘 제거는 라이브러리가 한다 (useGridOptions 의 tristateMultiColumnSort).
+문제는 "해제" 단계에서 행 순서가 되돌아가지 않는 것이다.
+
+정렬이 하나도 없으면 SortService 는 빈 정렬로 dataView.sort() 를 호출하는데,
+비교 함수(sortComparers)가 컬럼이 없으면 항상 0(neutral)을 돌려주므로
+정렬 아이콘만 사라지고 행은 직전 내림차순 순서에 그대로 머문다.
+
+그래서 여기서 원래 순서로 다시 정렬한다. 라이브러리가 "정렬 해제" 명령에서 쓰는 것과 같은 경로다.
+  sortLocalGridByDefaultSortFieldId()
+  -> defaultColumnSortFieldId ?? datasetIdPropertyName ?? 'id' 기준 오름차순
+
+즉 복원 기준은 "행 고유 키(idField) 오름차순"이다. 데이터를 받은 순서와 키 순서가 다른 화면
+(서버가 이름순으로 내려주는 목록 등)에서는 2층에서 기준 필드를 지정한다.
+  :options="{ defaultColumnSortFieldId: 'sortSeq' }"
+
+서버 모드(fetchData)에서는 손대지 않는다.
+정렬이 풀리면 sorters 가 빈 배열로 서버에 다시 조회되므로 서버가 준 원래 순서가 그대로 온다.
+--------------------------------------------------------------------------------------------------------------- */
+const handleSort = (e) => {
+  const args = slickArgs(e);
+  if (!args || backendServiceApi) return;
+
+  // 단일 정렬(sortCol) / 다중 정렬(sortCols) 두 형태가 모두 온다
+  const remaining = args.multiColumnSort ? (args.sortCols ?? []) : args.sortCol ? [args.sortCol] : [];
+  if (remaining.length > 0) return;
+
+  instance.value?.sortService?.sortLocalGridByDefaultSortFieldId?.();
+};
+
+/* ---------------------------------------------------------------------------------------------------------------
 컬럼 헤더 우클릭 -> 컬럼별 헤더 메뉴(정렬 / 컬럼 숨기기 / 컬럼 고정)
 
 헤더 메뉴는 원래 컬럼마다 우측에 뜨는 ∨ 버튼으로 열린다.
@@ -1140,6 +1172,7 @@ const passthroughAttrs = computed(() => {
       @onClick="handleClick"
       @onDblClick="handleDblClick"
       @onHeaderContextMenu="handleHeaderContextMenu"
+      @onSort="handleSort"
       @onCellChange="handleCellChange"
       @onSelectedRowsChanged="handleSelectedRowsChanged"
       @onGridStateChanged="handleGridStateChanged"

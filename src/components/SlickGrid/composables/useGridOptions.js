@@ -164,8 +164,31 @@ const BASE_OPTIONS = {
   enableEmptyDataWarningMessage: true,
   emptyDataWarning: { message: '조회된 데이터가 없습니다.' },
 
-  // ----- 정렬 -----
-  multiColumnSort: true,
+  /*
+   * ----- 정렬 -----
+   *
+   * tristateMultiColumnSort
+   *   컬럼 헤더 좌클릭이 [오름차순 -> 내림차순 -> 해제] 3단계로 돌게 한다.
+   *   라이브러리 기본값은 false 라서 오름/내림 두 상태만 무한 반복하고 정렬을 풀 방법이 없다.
+   *   (slickGrid.js setupColumnSort : 3번째 클릭에서 sortColumns 에서 빼고 정렬 아이콘도 지운다)
+   *
+   *   [주의] 정렬이 풀려도 행 순서는 되돌아가지 않는다.
+   *   빈 정렬로 dataView.sort() 를 하면 비교 함수가 항상 0을 돌려줘서 직전(내림차순) 순서가 그대로 남는다.
+   *   그래서 SlickGrid.vue 의 handleSort 가 원래 순서로 다시 정렬해준다.
+   *
+   * multiColumnSort: false
+   *   한 번에 한 컬럼만 정렬한다. 다른 컬럼을 클릭하면 이전 정렬이 풀린다.
+   *
+   *   tristate 와 함께 켜면(multiColumnSort: true) 다른 컬럼 클릭이 "누적"으로 바뀐다.
+   *   1차 정렬 컬럼의 값이 고유하면 2차 정렬은 화면에 아무 변화를 만들지 않아서
+   *   "클릭했는데 정렬이 안 된다"로 보인다. 그래서 단일 정렬을 기본으로 둔다.
+   *   (누적 정렬이 필요하면 2층에서 :options="{ multiColumnSort: true }")
+   *
+   *   헤더 메뉴의 오름/내림차순 명령은 이 값을 보고 알아서 단일 정렬로 동작한다
+   *   (slickHeaderMenu.js sortColumn : isMultiColumnSort 가 false면 기존 정렬을 비운다).
+   */
+  multiColumnSort: false,
+  tristateMultiColumnSort: true,
 
   /*
    * ----- 헤더 우클릭은 컬럼 선택기가 아니라 헤더 메뉴(∨ 메뉴)로 -----

@@ -172,6 +172,20 @@ describe('기능 플래그', () => {
   });
 });
 
+describe('정렬 (헤더 좌클릭 3단계)', () => {
+  it('3단계 정렬을 켠다 (라이브러리 기본값 false면 오름/내림만 무한 반복한다)', () => {
+    expect(buildGridOptions({}).tristateMultiColumnSort).toBe(true);
+  });
+
+  it('기본은 단일 정렬이다 (누적 정렬이면 2차 정렬이 화면에 안 보여 "안 눌린다"로 읽힌다)', () => {
+    expect(buildGridOptions({}).multiColumnSort).toBe(false);
+  });
+
+  it('2층에서 누적 정렬로 바꿀 수 있다', () => {
+    expect(buildGridOptions({}, { multiColumnSort: true }).multiColumnSort).toBe(true);
+  });
+});
+
 describe('컬럼 메뉴 (헤더 우클릭)', () => {
   it('헤더 우클릭 컬럼 선택기는 항상 끈다 (라이브러리 기본값이 true라 명시적으로 꺼야 한다)', () => {
     // 우클릭 자리는 컬럼별 헤더 메뉴가 쓴다 (SlickGrid.vue handleHeaderContextMenu)
