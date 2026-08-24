@@ -171,6 +171,15 @@ describe('기능 플래그', () => {
     expect(buildGridOptions({ idField: 'empNo' }).datasetIdPropertyName).toBe('empNo');
   });
 
+  it('정렬 해제 시 되돌아갈 기준 필드도 idField를 따라간다', () => {
+    // 라이브러리 기본값이 'id' 고정이라 id 없는 데이터에서 정렬 해제가 깨진다
+    expect(buildGridOptions({ idField: 'empNo' }).defaultColumnSortFieldId).toBe('empNo');
+  });
+
+  it('정렬은 3단계 사이클이다 (오름차순 -> 내림차순 -> 해제)', () => {
+    expect(buildGridOptions().tristateMultiColumnSort).toBe(true);
+  });
+
   /*
    * 컬럼 픽커는 라이브러리 기본값이 true라서 헤더 우클릭 시 컬럼 표시/숨김 팝업이 떴다.
    * 우클릭은 헤더 메뉴(∨와 동일)로 대체했으므로 어떤 조합에서도 픽커가 다시 켜지면 안 된다.
